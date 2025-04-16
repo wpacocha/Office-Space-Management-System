@@ -25,3 +25,10 @@ obj/
 
 # Others
 OfficeSpaceManagementSystem.API/Properties/launchSettings.json
+
+.vs/
+*.user
+*.suo
+*.db
+*.db-shm
+*.db-wal

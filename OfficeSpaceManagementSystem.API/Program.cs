@@ -1,4 +1,4 @@
-using OfficeSpaceManagementSystem.API.Data;
+﻿using OfficeSpaceManagementSystem.API.Data;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -22,6 +22,27 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
+app.MapGet("/validate", async (AppDbContext db) =>
+{
+    var validator = new DeskAssignmentValidator(db);
+    var result = await validator.ValidateAsync(DateOnly.FromDateTime(DateTime.Today));
+
+    return result.Success
+        ? Results.Ok("✅ Wszystkie zespoły można przypisać bez dzielenia.")
+        : Results.BadRequest($"❌ Nie można przypisać zespołów: {string.Join(", ", result.FailedTeams)}");
+});
+
+app.MapPost("/assign", async (AppDbContext db) =>
+{
+    var assigner = new DeskAssigner(db);
+    var failedTeams = await assigner.AssignAsync(DateOnly.FromDateTime(DateTime.Today));
+
+    return failedTeams.Count == 0
+        ? Results.Ok("✅ Biurka przypisane pomyślnie.")
+        : Results.BadRequest($"❌ Nie udało się przypisać: {string.Join(", ", failedTeams)}");
+});
+
 
 var summaries = new[]
 {
