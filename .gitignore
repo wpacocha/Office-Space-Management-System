@@ -1,0 +1,8 @@
+﻿################################################################################
+# Ten plik .gitignore został utworzony automatycznie przez Microsoft(R) Visual Studio.
+################################################################################
+
+/.vs
+/OfficeSpaceManagementSystem.Tests/bin/Debug/net8.0
+/OfficeSpaceManagementSystem.Tests/obj/Debug/net8.0
+/OfficeSpaceManagementSystem.Tests/obj
