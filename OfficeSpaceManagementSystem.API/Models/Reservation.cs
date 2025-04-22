@@ -27,7 +27,7 @@ namespace OfficeSpaceManagementSystem.API.Models
 
 		[ForeignKey("Desk")]
 		public int? AssignedDeskId { get; set; }
-		public Desk assignedDesk { get; set; }
+		public Desk? assignedDesk { get; set; }
 	}
 }
 
