@@ -7,13 +7,21 @@ namespace OfficeSpaceManagementSystem.API.Data
 {
     public static class DbSeeder
     {
-        public static void Seed(AppDbContext db)
+        public static void Seed(AppDbContext db, SeedOptions? options = null)
         {
+            options ??= new SeedOptions();
+
+            db.Reservations.RemoveRange(db.Reservations);
+            db.Desks.RemoveRange(db.Desks);
+            db.Users.RemoveRange(db.Users);
+            db.Teams.RemoveRange(db.Teams);
+            db.SaveChanges();
+
             if (!db.Zones.Any()) SeedZones(db);
-            if (!db.Teams.Any()) SeedTeams(db);
-            if (!db.Users.Any()) SeedUsers(db);
-            if (!db.Desks.Any()) SeedDesks(db);
-            if (!db.Reservations.Any()) SeedReservations(db);
+            SeedTeams(db, options);
+            SeedUsers(db, options);
+            SeedDesks(db);
+            SeedReservations(db, options);
         }
 
         private static void SeedZones(AppDbContext db)
@@ -52,28 +60,30 @@ namespace OfficeSpaceManagementSystem.API.Data
             db.SaveChanges();
         }
 
-        private static void SeedTeams(AppDbContext db)
+        private static void SeedTeams(AppDbContext db, SeedOptions options)
         {
             var teams = new List<Team>();
-            for (int i = 1; i <= 98; i++) teams.Add(new Team { name = $"Team {i}" });
-            teams.Add(new Team { name = "Executive" });
-            teams.Add(new Team { name = "HR" });
+            for (int i = 1; i <= options.TotalTeams; i++)
+                teams.Add(new Team { name = $"Team {i}" });
+            // Czy ci z HR i Executive w ogóle powinni tu być? Czy tym nie zajmujemy się odzielnie?
+
             db.Teams.AddRange(teams);
             db.SaveChanges();
         }
 
-        private static void SeedUsers(AppDbContext db)
+        private static void SeedUsers(AppDbContext db, SeedOptions options)
         {
             var random = new Random();
             var teams = db.Teams.ToList();
             var users = new List<User>();
             int id = 1;
-            while (users.Count < 300)
+
+            while (users.Count < options.TotalUsers)
             {
                 foreach (var team in teams)
                 {
-                    int count = random.Next(2, 31);
-                    for (int i = 0; i < count && users.Count < 300; i++)
+                    int count = random.Next(options.MinUsersPerTeam, options.MaxUsersPerTeam + 1);
+                    for (int i = 0; i < count && users.Count < options.TotalUsers; i++)
                     {
                         users.Add(new User
                         {
@@ -95,11 +105,10 @@ namespace OfficeSpaceManagementSystem.API.Data
             var zones = db.Zones.ToList();
             var random = new Random();
             var desks = new List<Desk>();
-            int id = 1;
 
             var types = Enumerable.Repeat(DeskType.Supercharged, 111)
                 .Concat(Enumerable.Repeat(DeskType.DualMonitor, 70))
-                .Concat(Enumerable.Repeat(DeskType.Standard, 232 - 111 - 70))
+                .Concat(Enumerable.Repeat(DeskType.Standard, 223 - 111 - 70))
                 .OrderBy(_ => random.Next())
                 .ToList();
 
@@ -123,33 +132,23 @@ namespace OfficeSpaceManagementSystem.API.Data
             db.SaveChanges();
         }
 
-        private static void SeedReservations(AppDbContext db)
+        private static void SeedReservations(AppDbContext db, SeedOptions options)
         {
-            var users = db.Users.ToList().OrderBy(_ => Guid.NewGuid()).Take(200).ToList();
-            var random = new Random();
-            var types = Enumerable.Repeat(DeskType.Supercharged, 111)
-                .Concat(Enumerable.Repeat(DeskType.DualMonitor, 70))
-                .Concat(Enumerable.Repeat(DeskType.Standard, 19))
-                .OrderBy(_ => random.Next())
-                .ToList();
-
-            var zones = Enumerable.Repeat(1, 138)
-                .Concat(Enumerable.Repeat(2, 29))
-                .Concat(Enumerable.Repeat(3, 26))
-                .Concat(Enumerable.Repeat(4, 16))
-                .OrderBy(_ => random.Next())
-                .ToList();
-
+            var users = db.Users.ToList().OrderBy(_ => Guid.NewGuid()).Take(options.ReservationsCount).ToList();
             var reservations = new List<Reservation>();
+
             for (int i = 0; i < users.Count; i++)
             {
+                var type = options.DeskTypeSelector?.Invoke(i) ?? DeskType.Standard;
+                var zone = options.ZonePreferenceSelector?.Invoke(i) ?? 1;
+
                 reservations.Add(new Reservation
                 {
                     UserId = users[i].Id,
                     CreatedAt = DateTime.Now,
                     Date = new DateOnly(2024, 4, 25),
-                    DeskTypePref = types[i],
-                    ZonePreference = zones[i],
+                    DeskTypePref = type,
+                    ZonePreference = zone,
                     assignedDesk = null
                 });
             }
