@@ -1,0 +1,32 @@
+﻿{
+
+  //by the zone name
+  "specialTeams": {
+    "HR": [ "08", "07", "06", "05" ],
+    "Executive": [ "03", "04", "05" ]
+  },
+
+  //by the zone type
+  "teamSizeRules": [
+    {
+      "minSize": 1,
+      "maxSize": 1,
+      "priorityTypes": [ "focus", "duo focus", "audio", "standard", "executive" ]
+    },
+    {
+      "minSize": 2,
+      "maxSize": 2,
+      "priorityTypes": [ "duo focus", "focus", "audio", "standard", "executive" ]
+    },
+    {
+      "minSize": 3,
+      "maxSize": 4,
+      "priorityTypes": [ "warroom", "focus", "audio", "standard", "executive" ]
+    },
+    {
+      "minSize": 5,
+      "maxSize": 100,
+      "priorityTypes": [ "standard", "audio", "focus", "executive" ]
+    }
+  ]
+}
