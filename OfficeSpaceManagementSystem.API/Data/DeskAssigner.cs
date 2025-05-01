@@ -25,163 +25,198 @@ namespace OfficeSpaceManagementSystem.API.Data
                 .ToListAsync();
 
             var desksByZone = desks
-                .GroupBy(d => d.ZoneId)
+                .GroupBy(d => d.Zone.Name)
                 .ToDictionary(g => g.Key, g => new Queue<Desk>(g.ToList()));
 
-            var zonesByType = desks
-                .Select(d => d.Zone)
+            var zones = desks.Select(d => d.Zone)
                 .Distinct()
-                .GroupBy(z => z.Priority)
+                .ToList();
+
+            var reservationsByTeam = reservations
+                .GroupBy(r => r.User.Team)
                 .ToDictionary(g => g.Key, g => g.ToList());
 
-            var failed = new List<string>();
+            var failedAssignements = new List<string>();
 
-            AssignPreferredZones(reservations, desksByZone, zonesByType);
-
-            AssignFallbackZones(reservations, desksByZone, zonesByType, failed);
+            AssignHrTeam(reservationsByTeam, desksByZone, failedAssignements);
+            AssignExecutiveTeam(reservationsByTeam, desksByZone, zones, failedAssignements);
+            AssignDuoTeams(reservationsByTeam, desksByZone, zones);
+            AssignSingleUsers(reservationsByTeam, desksByZone, zones, failedAssignements);
+            AssignBestFitTeams(reservationsByTeam, desksByZone);
+            //AssignBruteForce(reservationsByTeam, desksByZone, zones, failedAssignements);
 
             await _context.SaveChangesAsync();
-            return failed;
+            return failedAssignements;
         }
 
-        private static void AssignPreferredZones(List<Reservation> reservations, Dictionary<int, Queue<Desk>> desksByZone, Dictionary<int, List<Zone>> zonesByType)
+        private static void AssignHrTeam(
+            Dictionary<Team, List<Reservation>> reservationsByTeam, 
+            Dictionary<string, Queue<Desk>> desksByZone, 
+            List<string> failed)
         {
-            var reservationsByPreference = reservations
-                .GroupBy(r => r.ZonePreference)
-                .OrderBy(g => g.Key);
+            var hrTeam = reservationsByTeam.Keys.FirstOrDefault(t => t.name == "HR");
+            if (hrTeam == null) return;
 
-            foreach (var preferenceGroup in reservationsByPreference)
-            {
-                var groupedByTeam = preferenceGroup
-                    .GroupBy(r => r.User.Team)
-                    .OrderByDescending(g => g.Count());
+            var hrReservations = reservationsByTeam[hrTeam];
+            string[] preferredZones = { "0-8", "0-7", "0-6", "0-5" };
 
-                foreach (var teamGroup in groupedByTeam)
+            int assigned = AssignToZonesSequentially(hrReservations, preferredZones.ToList(), desksByZone);
+
+            if (assigned < hrReservations.Count)
+                failed.Add($"HR Team: {hrReservations.Count - assigned} users could not be assigned.");
+
+            reservationsByTeam.Remove(hrTeam);
+        }
+
+        private static void AssignExecutiveTeam(
+            Dictionary<Team, List<Reservation>> reservationsByTeam,
+            Dictionary<string, Queue<Desk>> desksByZone,
+            List<Zone> allZones,
+            List<string> failed)
+        {
+            var executiveTeam = reservationsByTeam.Keys.FirstOrDefault(t => t.name == "Executive");
+            if (executiveTeam == null) return;
+
+            var executiveReservations = reservationsByTeam[executiveTeam];
+
+            var executiveZones = allZones
+                .Where(z => z.Priority == 4)
+                .OrderBy(z => z.Id)
+                .Select(z => z.Name)
+                .ToList();
+
+            int assigned = AssignToZonesSequentially(executiveReservations, executiveZones, desksByZone);
+
+            if (assigned < executiveReservations.Count)
+                failed.Add($"Executive Team: {executiveReservations.Count - assigned} users could not be assigned.");
+
+            reservationsByTeam.Remove(executiveTeam);
+        }
+
+        private static void AssignDuoTeams(
+            Dictionary<Team, List<Reservation>> reservationsByTeam,
+            Dictionary<string, Queue<Desk>> desksByZone,
+            List<Zone> allZones)
+        {
+            var duoFocusZones = allZones
+                .Where(z => z.Priority == 3 && desksByZone.TryGetValue(z.Name, out var q) && q.Count == 2)
+                .Select(z => new
                 {
-                    var teamReservations = teamGroup.ToList();
-                    int teamSize = teamReservations.Count;
+                    Zone = z,
+                    Desks = new Queue<Desk>(desksByZone[z.Name])
+                })
+                .ToList();
 
-                    var preferredZones = zonesByType.GetValueOrDefault(preferenceGroup.Key, new List<Zone>())
-                        .OrderByDescending(z => z.TotalDesks)
-                        .ToList();
+            foreach (var kvp in reservationsByTeam.Where(kvp => kvp.Value.Count == 2).ToList())
+            {
+                var team = kvp.Key;
+                var reservations = kvp.Value;
 
-                    if (TryAssignWholeTeam(teamReservations, teamSize, preferredZones, desksByZone))
-                        continue;
+                var match = duoFocusZones.FirstOrDefault();
+                if (match == null)
+                    continue;
 
-                    AssignTeamIndividually(teamReservations, preferredZones, desksByZone);
-                }
+                reservations[0].AssignedDeskId = match.Desks.Dequeue().Id;
+                reservations[1].AssignedDeskId = match.Desks.Dequeue().Id;
+
+                desksByZone[match.Zone.Name] = match.Desks;
+                reservationsByTeam.Remove(team);
+                duoFocusZones.Remove(match);
             }
         }
 
-        private static void AssignFallbackZones(List<Reservation> reservations, Dictionary<int, Queue<Desk>> desksByZone, Dictionary<int, List<Zone>> zonesByType, List<string> failed)
+        private static void AssignSingleUsers(
+            Dictionary<Team, List<Reservation>> reservationsByTeam,
+            Dictionary<string, Queue<Desk>> desksByZone,
+            List<Zone> allZones,
+            List<string> failed)
         {
-            var unassignedReservations = reservations.Where(r => r.AssignedDeskId == null).ToList();
+            var onePersonTeams = reservationsByTeam
+                .Where(kvp => kvp.Value.Count == 1)
+                .ToList();
 
-            var groupedByTeam = unassignedReservations
-                .GroupBy(r => r.User.Team)
-                .OrderByDescending(g => g.Count());
+            int[] priorityOrder = { 1, 2, 3, 4 };
 
-            foreach (var teamGroup in groupedByTeam)
+            foreach (var (team, reservations) in onePersonTeams)
             {
-                var team = teamGroup.Key;
-                var teamReservations = teamGroup.ToList();
-                int teamSize = teamReservations.Count;
-
-                var teamPreference = teamReservations
-                    .GroupBy(r => r.ZonePreference)
-                    .OrderByDescending(g => g.Count())
-                    .First().Key;
-
-                var fallbackTypes = Enumerable.Range(1, 4).Where(p => p != teamPreference);
-
                 bool assigned = false;
 
-                foreach (var fallbackType in fallbackTypes)
+                foreach (int priority in priorityOrder)
                 {
-                    var fallbackZones = zonesByType.GetValueOrDefault(fallbackType, new List<Zone>()).OrderBy(z => z.Id);
+                    var zones = allZones
+                        .Where(z => z.Priority == priority && desksByZone.TryGetValue(z.Name, out var q) && q.Count > 0)
+                        .ToList();
 
-                    if (TryAssignWholeTeam(teamReservations, teamSize, fallbackZones, desksByZone))
+                    foreach (var zone in zones)
                     {
+                        var deskQueue = desksByZone[zone.Name];
+                        if (deskQueue.Count == 0) continue;
+
+                        reservations[0].AssignedDeskId = deskQueue.Dequeue().Id;
                         assigned = true;
+                        desksByZone[zone.Name] = deskQueue;
                         break;
                     }
+
+                    if (assigned) break;
                 }
 
-                if (assigned) continue;
-
-                var fallbackQueue = new Queue<Reservation>(teamReservations.OrderBy(r => r.CreatedAt));
-
-                foreach (var fallbackType in fallbackTypes)
-                {
-                    var fallbackZones = zonesByType.GetValueOrDefault(fallbackType, new List<Zone>()).OrderBy(z => z.Id);
-
-                    foreach (var zone in fallbackZones)
-                    {
-                        if (!desksByZone.TryGetValue(zone.Id, out var availableDesks))
-                            continue;
-
-                        while (availableDesks.Count > 0 && fallbackQueue.Count > 0)
-                        {
-                            var res = fallbackQueue.Dequeue();
-                            var desk = availableDesks.Dequeue();
-                            res.AssignedDeskId = desk.Id;
-                        }
-
-                        if (fallbackQueue.Count == 0)
-                            break;
-                    }
-
-                    if (fallbackQueue.Count == 0)
-                        break;
-                }
-
-                if (fallbackQueue.Count > 0)
-                {
-                    failed.Add($"Team {team.name} (unassigned {fallbackQueue.Count}/{teamReservations.Count})");
-                }
+                if (assigned)
+                    reservationsByTeam.Remove(team);
+                else
+                    failed.Add($"Team {team.name}: no desk could be assigned");
             }
         }
 
-        private static bool TryAssignWholeTeam(List<Reservation> teamReservations, int teamSize, IEnumerable<Zone> zones, Dictionary<int, Queue<Desk>> desksByZone)
+        private static void AssignBestFitTeams(
+            Dictionary<Team, List<Reservation>> reservationsByTeam,
+            Dictionary<string, Queue<Desk>> desksByZone)
         {
-            foreach (var zone in zones)
-            {
-                if (!desksByZone.TryGetValue(zone.Id, out var availableDesks))
-                    continue;
+            var remainingTeams = reservationsByTeam.ToList();
 
-                if (availableDesks.Count >= teamSize)
+            foreach (var (team, reservations) in remainingTeams)
+            {
+                int teamSize = reservations.Count;
+
+                var matchingZone = desksByZone.FirstOrDefault(kvp => kvp.Value.Count == teamSize);
+
+                if (matchingZone.Value != null && matchingZone.Value.Count == teamSize)
                 {
+                    var deskQueue = matchingZone.Value;
+
                     for (int i = 0; i < teamSize; i++)
                     {
-                        var res = teamReservations[i];
-                        var desk = availableDesks.Dequeue();
-                        res.AssignedDeskId = desk.Id;
+                        reservations[i].AssignedDeskId = deskQueue.Dequeue().Id;
                     }
-                    return true;
+
+                    desksByZone[matchingZone.Key] = deskQueue;
+                    reservationsByTeam.Remove(team);
                 }
             }
-            return false;
         }
 
-        private static void AssignTeamIndividually(List<Reservation> teamReservations, IEnumerable<Zone> zones, Dictionary<int, Queue<Desk>> desksByZone)
+        private static int AssignToZonesSequentially(
+            List<Reservation> reservations,
+            List<string> zoneNames,
+            Dictionary<string, Queue<Desk>> desksByZone)
         {
-            var queue = new Queue<Reservation>(teamReservations.OrderBy(r => r.CreatedAt));
-
-            foreach (var zone in zones)
+            int assigned = 0;
+            foreach (var zoneName in zoneNames)
             {
-                if (!desksByZone.TryGetValue(zone.Id, out var availableDesks))
+                if (!desksByZone.TryGetValue(zoneName, out var availableDesks) || availableDesks.Count == 0)
                     continue;
 
-                while (availableDesks.Count > 0 && queue.Count > 0)
+                while (availableDesks.Count > 0 && assigned < reservations.Count)
                 {
-                    var res = queue.Dequeue();
-                    var desk = availableDesks.Dequeue();
-                    res.AssignedDeskId = desk.Id;
+                    reservations[assigned].AssignedDeskId = availableDesks.Dequeue().Id;
+                    assigned++;
                 }
 
-                if (queue.Count == 0)
+                if (assigned == reservations.Count)
                     break;
             }
+
+            return assigned;
         }
     }
 }
