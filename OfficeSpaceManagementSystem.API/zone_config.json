@@ -1,0 +1,212 @@
+﻿{
+  "Zones": [
+    {
+      "Name": "0-1",
+      "Type": "Standard",
+      "Floor": 0,
+      "TotalDesks": 15,
+      "WideMonitorsDesks": 7,
+      "DualMonitorDesks": 8,
+      "FirstDeskType": "DualMonitor"
+    },
+    {
+      "Name": "0-2",
+      "Type": "Audio",
+      "Floor": 0,
+      "TotalDesks": 9,
+      "WideMonitorsDesks": 5,
+      "DualMonitor": 4,
+      "FirstDeskType": "WideMonitor"
+    },
+    {
+      "Name": "0-3",
+      "Type": "Executive",
+      "Floor": 0,
+      "TotalDesks": 6,
+      "WideMonitorsDesks": 3,
+      "DualMonitor": 3,
+      "FirstDeskType": "DualMonitor"
+    },
+    {
+      "Name": "0-4",
+      "Type": "Executive",
+      "Floor": 0,
+      "TotalDesks": 4,
+      "WideMonitorsDesks": 2,
+      "DualMonitor": 2,
+      "FirstDeskType": "WideMonitor"
+    },
+    {
+      "Name": "0-5",
+      "Type": "Executive",
+      "Floor": 0,
+      "TotalDesks": 6,
+      "WideMonitorsDesks": 3,
+      "DualMonitor": 3,
+      "FirstDeskType": "DualMonitor"
+    },
+    {
+      "Name": "0-6",
+      "Type": "Audio",
+      "Floor": 0,
+      "TotalDesks": 6,
+      "WideMonitorsDesks": 3,
+      "DualMonitor": 3,
+      "FirstDeskType": "WideMonitor"
+    },
+    {
+      "Name": "0-7",
+      "Type": "Standard",
+      "Floor": 0,
+      "TotalDesks": 4,
+      "WideMonitorsDesks": 2,
+      "DualMonitor": 2,
+      "FirstDeskType": "DualMonitor"
+    },
+    {
+      "Name": "0-8",
+      "Type": "HR",
+      "Floor": 0,
+      "TotalDesks": 4,
+      "WideMonitorsDesks": 2,
+      "DualMonitor": 2,
+      "FirstDeskType": "WideMonitor"
+    },
+    {
+      "Name": "1-1",
+      "Type": "Standard",
+      "Floor": 1,
+      "TotalDesks": 24,
+      "WideMonitorsDesks": 12,
+      "DualMonitor": 12,
+      "FirstDeskType": "DualMonitor"
+    },
+    {
+      "Name": "1-2",
+      "Type": "Audio",
+      "Floor": 1,
+      "TotalDesks": 9,
+      "WideMonitorsDesks": 4,
+      "DualMonitor": 5,
+      "FirstDeskType": "DualMonitor"
+    },
+    {
+      "Name": "1-3",
+      "Type": "DuoFocus",
+      "Floor": 1,
+      "TotalDesks": 2,
+      "WideMonitorsDesks": 1,
+      "DualMonitor": 1,
+      "FirstDeskType": "WideMonitor"
+    },
+    {
+      "Name": "1-4",
+      "Type": "Audio",
+      "Floor": 1,
+      "TotalDesks": 9,
+      "WideMonitorsDesks": 5,
+      "DualMonitor": 4,
+      "FirstDeskType": "WideMonitor"
+    },
+    {
+      "Name": "1-5",
+      "Type": "Standard",
+      "Floor": 1,
+      "TotalDesks": 9,
+      "WideMonitorsDesks": 4,
+      "DualMonitor": 5,
+      "FirstDeskType": "DualMonitor"
+    },
+    {
+      "Name": "1-6",
+      "Type": "Standard",
+      "Floor": 1,
+      "TotalDesks": 21,
+      "WideMonitorsDesks": 11,
+      "DualMonitor": 10,
+      "FirstDeskType": "WideMonitor"
+    },
+    {
+      "Name": "1-7",
+      "Type": "Standard",
+      "Floor": 1,
+      "TotalDesks": 13,
+      "WideMonitorsDesks": 6,
+      "DualMonitor": 7,
+      "FirstDeskType": "DualMonitor"
+    },
+    {
+      "Name": "2-1",
+      "Type": "Standard",
+      "Floor": 2,
+      "TotalDesks": 18,
+      "WideMonitorsDesks": 9,
+      "DualMonitor": 9,
+      "FirstDeskType": "WideMonitor"
+    },
+    {
+      "Name": "2-2",
+      "Type": "Focus",
+      "Floor": 2,
+      "TotalDesks": 9,
+      "WideMonitorsDesks": 5,
+      "DualMonitor": 4,
+      "FirstDeskType": "WideMonitor"
+    },
+    {
+      "Name": "2-3",
+      "Type": "DuoFocus",
+      "Floor": 2,
+      "TotalDesks": 2,
+      "WideMonitorsDesks": 1,
+      "DualMonitor": 1,
+      "FirstDeskType": "WideMonitor"
+    },
+    {
+      "Name": "2-4",
+      "Type": "Focus",
+      "Floor": 2,
+      "TotalDesks": 9,
+      "WideMonitorsDesks": 4,
+      "DualMonitor": 5,
+      "FirstDeskType": "DualMonitor"
+    },
+    {
+      "Name": "2-5",
+      "Type": "Audio",
+      "Floor": 2,
+      "TotalDesks": 6,
+      "WideMonitorsDesks": 3,
+      "DualMonitor": 3,
+      "FirstDeskType": "WideMonitor"
+    },
+    {
+      "Name": "2-6",
+      "Type": "Standard",
+      "Floor": 2,
+      "TotalDesks": 4,
+      "WideMonitorsDesks": 2,
+      "DualMonitor": 2,
+      "FirstDeskType": "WideMonitor"
+    },
+    {
+      "Name": "2-7",
+      "Type": "Standard",
+      "Floor": 2,
+      "TotalDesks": 30,
+      "WideMonitorsDesks": 15,
+      "DualMonitor": 15,
+      "FirstDeskType": "DualMonitor"
+    },
+    {
+      "Name": "2-8",
+      "Type": "WarRoom",
+      "Floor": 2,
+      "TotalDesks": 4,
+      "WideMonitorsDesks": 2,
+      "DualMonitor": 2,
+      "FirstDeskType": "WideMonitor"
+    }
+  ] 
+}
+
