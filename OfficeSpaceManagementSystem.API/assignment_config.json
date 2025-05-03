@@ -2,8 +2,8 @@
 
   //by the zone name
   "specialTeams": {
-    "HR": [ "08", "07", "06", "05" ],
-    "Executive": [ "03", "04", "05" ]
+    "HR": [ "0-8", "0-7", "0-6", "0-5" ],
+    "Executive": [ "0-3", "0-4", "0-5" ]
   },
 
   //by the zone type
@@ -11,22 +11,14 @@
     {
       "minSize": 1,
       "maxSize": 1,
-      "priorityTypes": [ "focus", "duo focus", "audio", "standard", "executive" ]
+      "priorityTypes": [ "Focus", "Audio", "DuoFocus", "WarRoom", "Standard", "Executive", "HR" ]
     },
     {
       "minSize": 2,
-      "maxSize": 2,
-      "priorityTypes": [ "duo focus", "focus", "audio", "standard", "executive" ]
-    },
-    {
-      "minSize": 3,
-      "maxSize": 4,
-      "priorityTypes": [ "warroom", "focus", "audio", "standard", "executive" ]
-    },
-    {
-      "minSize": 5,
-      "maxSize": 100,
-      "priorityTypes": [ "standard", "audio", "focus", "executive" ]
+      "maxSize": 15,
+      "priorityTypes": [ "DuoFocus", "WarRoom", "Standard", "Audio", "HR", "Executive", "Focus" ]
     }
   ]
 }
+
+//fix bug
