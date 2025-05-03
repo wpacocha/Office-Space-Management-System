@@ -11,26 +11,35 @@ namespace OfficeSpaceManagementSystem.API.Models
         public string Name { get; set; }
 
         [Required]
-        [Range(1, 4)]
-        public int Priority { get; set; }
+        public ZoneType Type { get; set; }
 
         [Required]
         [Range(0, 2)]
         public int Florr { get; set; }
 
         [Required]
-        public int StandardDesks { get; set; }
+        public int TotalDesks { get; set; }
+
+        [Required]
+        public int WideMonitorDesks { get; set; }
 
         [Required]
         public int DualMonitorDesks { get; set; }
 
         [Required]
-        public int SuperchargedDesks { get; set; }
-
-        [Required]
-        public int TotalDesks { get; set; }
+        public DeskType FirstDeskType { get; set; }
 
         public ICollection<Desk> Desks { get; set; }
 
+    }
+    public enum ZoneType
+    {
+        Standard,
+        Audio,
+        HR,
+        Executive,
+        DuoFocus,
+        Focus,
+        WarRoom
     }
 }

@@ -23,9 +23,8 @@ namespace OfficeSpaceManagementSystem.API.Models
 	}
 	public enum DeskType
 	{
-		Standard = 0,
-		DualMonitor = 1,
-		Supercharged = 2
+		WideMonitor,
+		DualMonitor
 	}
 }
 
