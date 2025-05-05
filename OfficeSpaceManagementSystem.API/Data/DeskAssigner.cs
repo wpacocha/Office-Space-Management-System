@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using OfficeSpaceManagementSystem.API.Loaders;
 using OfficeSpaceManagementSystem.API.Models;
 
 namespace OfficeSpaceManagementSystem.API.Data
@@ -38,29 +39,59 @@ namespace OfficeSpaceManagementSystem.API.Data
 
             var failedAssignements = new List<string>();
 
-            AssignHrTeam(reservationsByTeam, desksByZone, failedAssignements);
-            AssignExecutiveTeam(reservationsByTeam, desksByZone, zones, failedAssignements);
-            AssignDuoTeams(reservationsByTeam, desksByZone, zones);
-            AssignSingleUsers(reservationsByTeam, desksByZone, zones, failedAssignements);
-            AssignBestFitTeams(reservationsByTeam, desksByZone);
-            //AssignBruteForce(reservationsByTeam, desksByZone, zones, failedAssignements);
+            var path = Path.Combine(AppContext.BaseDirectory, "assignment_config.json");
+            var config = AssignmentConfigLoader.Load(path);
+
+            var hrZones = config.SpecialTeams["HR"].ToList();
+            var executiveZones = config.SpecialTeams["Executive"].ToList();
+
+            var singleTeamTypes = config.TeamSizeRules
+                .Where(r => r.MinSize == 1 && r.MaxSize == 1)
+                .SelectMany(r => r.PriorityTypes)
+                .Select(s => Enum.Parse<ZoneType>(s))
+                .ToList();
+
+            var otherTeamsTypes = config.TeamSizeRules
+                .Where(r => r.MinSize > 1)
+                .SelectMany(r => r.PriorityTypes)
+                .Select(s => Enum.Parse<ZoneType>(s))
+                .ToList();
+
+            AssignHrTeam(reservationsByTeam, desksByZone, hrZones, failedAssignements);
+            AssignExecutiveTeam(reservationsByTeam, desksByZone, executiveZones, failedAssignements);
+
+            AssignSingleUsers(reservationsByTeam, desksByZone, zones, singleTeamTypes, failedAssignements);
+            AssignBestFitTeams(reservationsByTeam, desksByZone, zones, otherTeamsTypes);
+
+            await _context.SaveChangesAsync();
+
+            reservations = await _context.Reservations
+                .Include(r => r.User)
+                .ThenInclude(u => u.Team)
+                .Where(r => r.Date == date)
+                .ToListAsync();
+
+            var freeDesks = desksByZone.Values.SelectMany(q => q).ToList();
+            var unassignedReservations = reservationsByTeam.Values.SelectMany(q => q).ToList();
+
+            AssignUsingMetaheuristic(unassignedReservations, freeDesks, failedAssignements);
 
             await _context.SaveChangesAsync();
             return failedAssignements;
         }
 
         private static void AssignHrTeam(
-            Dictionary<Team, List<Reservation>> reservationsByTeam, 
-            Dictionary<string, Queue<Desk>> desksByZone, 
+            Dictionary<Team, List<Reservation>> reservationsByTeam,
+            Dictionary<string, Queue<Desk>> desksByZone,
+            List<string> preferredZones,
             List<string> failed)
         {
             var hrTeam = reservationsByTeam.Keys.FirstOrDefault(t => t.name == "HR");
             if (hrTeam == null) return;
 
             var hrReservations = reservationsByTeam[hrTeam];
-            string[] preferredZones = { "0-8", "0-7", "0-6", "0-5" };
 
-            int assigned = AssignToZonesSequentially(hrReservations, preferredZones.ToList(), desksByZone);
+            int assigned = AssignToZonesSequentially(hrReservations, preferredZones, desksByZone);
 
             if (assigned < hrReservations.Count)
                 failed.Add($"HR Team: {hrReservations.Count - assigned} users could not be assigned.");
@@ -71,7 +102,7 @@ namespace OfficeSpaceManagementSystem.API.Data
         private static void AssignExecutiveTeam(
             Dictionary<Team, List<Reservation>> reservationsByTeam,
             Dictionary<string, Queue<Desk>> desksByZone,
-            List<Zone> allZones,
+            List<string> preferredZones,
             List<string> failed)
         {
             var executiveTeam = reservationsByTeam.Keys.FirstOrDefault(t => t.name == "Executive");
@@ -79,13 +110,7 @@ namespace OfficeSpaceManagementSystem.API.Data
 
             var executiveReservations = reservationsByTeam[executiveTeam];
 
-            var executiveZones = allZones
-                .Where(z => z.Priority == 4)
-                .OrderBy(z => z.Id)
-                .Select(z => z.Name)
-                .ToList();
-
-            int assigned = AssignToZonesSequentially(executiveReservations, executiveZones, desksByZone);
+            int assigned = AssignToZonesSequentially(executiveReservations, preferredZones, desksByZone);
 
             if (assigned < executiveReservations.Count)
                 failed.Add($"Executive Team: {executiveReservations.Count - assigned} users could not be assigned.");
@@ -93,58 +118,25 @@ namespace OfficeSpaceManagementSystem.API.Data
             reservationsByTeam.Remove(executiveTeam);
         }
 
-        private static void AssignDuoTeams(
-            Dictionary<Team, List<Reservation>> reservationsByTeam,
-            Dictionary<string, Queue<Desk>> desksByZone,
-            List<Zone> allZones)
-        {
-            var duoFocusZones = allZones
-                .Where(z => z.Priority == 3 && desksByZone.TryGetValue(z.Name, out var q) && q.Count == 2)
-                .Select(z => new
-                {
-                    Zone = z,
-                    Desks = new Queue<Desk>(desksByZone[z.Name])
-                })
-                .ToList();
-
-            foreach (var kvp in reservationsByTeam.Where(kvp => kvp.Value.Count == 2).ToList())
-            {
-                var team = kvp.Key;
-                var reservations = kvp.Value;
-
-                var match = duoFocusZones.FirstOrDefault();
-                if (match == null)
-                    continue;
-
-                reservations[0].AssignedDeskId = match.Desks.Dequeue().Id;
-                reservations[1].AssignedDeskId = match.Desks.Dequeue().Id;
-
-                desksByZone[match.Zone.Name] = match.Desks;
-                reservationsByTeam.Remove(team);
-                duoFocusZones.Remove(match);
-            }
-        }
-
         private static void AssignSingleUsers(
             Dictionary<Team, List<Reservation>> reservationsByTeam,
             Dictionary<string, Queue<Desk>> desksByZone,
             List<Zone> allZones,
+            List<ZoneType> typeOrder,
             List<string> failed)
         {
             var onePersonTeams = reservationsByTeam
                 .Where(kvp => kvp.Value.Count == 1)
                 .ToList();
 
-            int[] priorityOrder = { 1, 2, 3, 4 };
-
             foreach (var (team, reservations) in onePersonTeams)
             {
                 bool assigned = false;
 
-                foreach (int priority in priorityOrder)
+                foreach (var type in typeOrder)
                 {
                     var zones = allZones
-                        .Where(z => z.Priority == priority && desksByZone.TryGetValue(z.Name, out var q) && q.Count > 0)
+                        .Where(z => z.Type == type && desksByZone.TryGetValue(z.Name, out var q) && q.Count > 0)
                         .ToList();
 
                     foreach (var zone in zones)
@@ -170,27 +162,55 @@ namespace OfficeSpaceManagementSystem.API.Data
 
         private static void AssignBestFitTeams(
             Dictionary<Team, List<Reservation>> reservationsByTeam,
-            Dictionary<string, Queue<Desk>> desksByZone)
-        {
-            var remainingTeams = reservationsByTeam.ToList();
+            Dictionary<string, Queue<Desk>> desksByZone,
+            List<Zone> allZones,
+            List<ZoneType> typeOrder)
+        {          
+            var emptyZones = allZones
+                .Where(z => z.TotalDesks == desksByZone[z.Name].Count)
+                .OrderBy(z => typeOrder.IndexOf(z.Type))
+                .ToList();
 
-            foreach (var (team, reservations) in remainingTeams)
+            foreach (var (team, reservations) in reservationsByTeam.ToList())
             {
                 int teamSize = reservations.Count;
 
-                var matchingZone = desksByZone.FirstOrDefault(kvp => kvp.Value.Count == teamSize);
+                var matchingZone = emptyZones
+                    .FirstOrDefault(z => z.TotalDesks == teamSize);
 
-                if (matchingZone.Value != null && matchingZone.Value.Count == teamSize)
+                if (matchingZone != null)
                 {
-                    var deskQueue = matchingZone.Value;
+                    var desksToAssign = desksByZone[matchingZone.Name];
 
                     for (int i = 0; i < teamSize; i++)
                     {
-                        reservations[i].AssignedDeskId = deskQueue.Dequeue().Id;
+                        reservations[i].AssignedDeskId = desksToAssign.Dequeue().Id;
                     }
 
-                    desksByZone[matchingZone.Key] = deskQueue;
+                    emptyZones.Remove(matchingZone);
                     reservationsByTeam.Remove(team);
+                }
+            }
+        }
+
+        private static void AssignUsingMetaheuristic(
+            List<Reservation> reservations,
+            List<Desk> desks,
+            List<string> failed)
+        {
+            var simulatedAnnealing = new SimulatedAnnealingAssigner();
+            var optimizedReservations = simulatedAnnealing.Run(reservations, desks);
+            for (int i = 0; i < reservations.Count; i++)
+            {
+                if (reservations[i].AssignedDeskId != null) continue;
+
+                if (optimizedReservations[i].AssignedDeskId == null)
+                {
+                    failed.Add($"Reservation {reservations[i].Id} could not be assigned.");
+                }
+                else
+                {
+                    reservations[i].AssignedDeskId = optimizedReservations[i].AssignedDeskId;
                 }
             }
         }

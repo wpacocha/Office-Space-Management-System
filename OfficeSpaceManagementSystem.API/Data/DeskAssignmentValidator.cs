@@ -20,16 +20,15 @@ namespace OfficeSpaceManagementSystem.API.Data
                 .Where(r => r.Date == date)
                 .ToListAsync();
 
-            var zones = await _context.Zones.OrderBy(z => z.Priority).ToListAsync();
+            var zones = await _context.Zones.OrderBy(z => z.Type).ToListAsync();
 
             // dostêpne biurka per typ per strefa
             var zoneDesksAvailable = zones.ToDictionary(
                 z => z.Id,
                 z => new Dictionary<DeskType, int>
                 {
-                    { DeskType.Standard, z.StandardDesks },
-                    { DeskType.DualMonitor, z.DualMonitorDesks },
-                    { DeskType.Supercharged, z.SuperchargedDesks }
+                    { DeskType.WideMonitor, z.WideMonitorDesks },
+                    { DeskType.DualMonitor, z.DualMonitorDesks }
                 });
 
             var groupedByTeam = reservations.GroupBy(r => r.User.TeamId);
