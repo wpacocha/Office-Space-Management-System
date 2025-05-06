@@ -19,10 +19,6 @@ namespace OfficeSpaceManagementSystem.API.Models
 		public DateTime CreatedAt { get; set; }
 
 		[Required]
-		[Range(1,4)]
-		public int ZonePreference { get; set; }
-
-		[Required]
 		public DeskType DeskTypePref { get; set; }
 
 		[ForeignKey("Desk")]

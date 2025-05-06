@@ -31,12 +31,12 @@ namespace OfficeSpaceManagementSystem.API.Migrations
                     Id = table.Column<int>(type: "INTEGER", nullable: false)
                         .Annotation("Sqlite:Autoincrement", true),
                     Name = table.Column<string>(type: "TEXT", nullable: false),
-                    Priority = table.Column<int>(type: "INTEGER", nullable: false),
+                    Type = table.Column<int>(type: "INTEGER", nullable: false),
                     Florr = table.Column<int>(type: "INTEGER", nullable: false),
-                    StandardDesks = table.Column<int>(type: "INTEGER", nullable: false),
+                    TotalDesks = table.Column<int>(type: "INTEGER", nullable: false),
+                    WideMonitorDesks = table.Column<int>(type: "INTEGER", nullable: false),
                     DualMonitorDesks = table.Column<int>(type: "INTEGER", nullable: false),
-                    SuperchargedDesks = table.Column<int>(type: "INTEGER", nullable: false),
-                    TotalDesks = table.Column<int>(type: "INTEGER", nullable: false)
+                    FirstDeskType = table.Column<int>(type: "INTEGER", nullable: false)
                 },
                 constraints: table =>
                 {

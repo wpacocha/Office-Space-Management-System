@@ -11,7 +11,7 @@ using OfficeSpaceManagementSystem.API.Data;
 namespace OfficeSpaceManagementSystem.API.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20250412105352_InitialCreate")]
+    [Migration("20250506165136_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -128,6 +128,9 @@ namespace OfficeSpaceManagementSystem.API.Migrations
                     b.Property<int>("DualMonitorDesks")
                         .HasColumnType("INTEGER");
 
+                    b.Property<int>("FirstDeskType")
+                        .HasColumnType("INTEGER");
+
                     b.Property<int>("Florr")
                         .HasColumnType("INTEGER");
 
@@ -135,16 +138,13 @@ namespace OfficeSpaceManagementSystem.API.Migrations
                         .IsRequired()
                         .HasColumnType("TEXT");
 
-                    b.Property<int>("Priority")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<int>("StandardDesks")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<int>("SuperchargedDesks")
-                        .HasColumnType("INTEGER");
-
                     b.Property<int>("TotalDesks")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("Type")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("WideMonitorDesks")
                         .HasColumnType("INTEGER");
 
                     b.HasKey("Id");
