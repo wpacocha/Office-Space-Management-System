@@ -1,23 +1,19 @@
-import { useEffect, useState } from "react";
-import axios from "axios";
+﻿import { useEffect, useState } from "react";
 
 function App() {
-    const [zones, setZones] = useState([]);
+    const [message, setMessage] = useState("Loading...");
 
     useEffect(() => {
-        axios.get("/api/zones") // przez proxy trafi na https://localhost:5001/api/zones
-            .then(res => setZones(res.data))
-            .catch(err => console.error(err));
+        fetch("/validate")
+            .then((res) => res.text())
+            .then(setMessage)
+            .catch((err) => setMessage("❌ Błąd połączenia z backendem"));
     }, []);
 
     return (
-        <div>
-            <h1>Strefy w biurze</h1>
-            <ul>
-                {zones.map(zone => (
-                    <li key={zone.id}>{zone.name}</li>
-                ))}
-            </ul>
+        <div style={{ padding: "2rem" }}>
+            <h1>Office Space App</h1>
+            <p>{message}</p>
         </div>
     );
 }
