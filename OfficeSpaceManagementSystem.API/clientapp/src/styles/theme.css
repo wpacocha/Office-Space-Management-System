@@ -1,0 +1,94 @@
+:root {
+    --bg-color: #ffffff;
+    --text-color: #333333;
+    --primary-color: #6264A7; /* Teams fiolet */
+    --accent-color: #8A8CD9;
+    --disabled-color: #cccccc;
+    --button-color: #6264A7;
+    --button-text: #ffffff;
+    --table-header-bg: #f0f0f0;
+    --table-row-hover: #e6e6ff;
+}
+
+[data-theme="dark"] {
+    --bg-color: #2b2b2b;
+    --text-color: #f0f0f0;
+    --primary-color: #8A8CD9;
+    --accent-color: #b3b5f2;
+    --disabled-color: #555555;
+    --button-color: #8A8CD9;
+    --button-text: #000000;
+    --table-header-bg: #333333;
+    --table-row-hover: #444466;
+}
+
+body {
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    font-family: "Segoe UI", sans-serif;
+    margin: 0;
+    padding: 0;
+}
+
+button {
+    background-color: var(--button-color);
+    color: var(--button-text);
+    border: none;
+    padding: 0.6rem 1.2rem;
+    border-radius: 8px;
+    cursor: pointer;
+}
+
+    button:hover {
+        opacity: 0.9;
+    }
+
+nav a {
+    text-decoration: none;
+    color: var(--primary-color);
+    font-weight: bold;
+}
+
+    nav a:hover {
+        text-decoration: underline;
+    }
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+th, td {
+    padding: 0.8rem;
+    text-align: left;
+}
+
+th {
+    background-color: var(--table-header-bg);
+}
+
+tr:hover {
+    background-color: var(--table-row-hover);
+}
+
+input, select {
+    padding: 0.5rem;
+    margin-top: 0.2rem;
+    margin-bottom: 1rem;
+    border: 1px solid var(--disabled-color);
+    border-radius: 6px;
+    width: 100%;
+    background-color: var(--bg-color);
+    color: var(--text-color);
+}
+.form-container {
+    padding: 2rem;
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.table-container {
+    padding: 2rem;
+    max-width: 900px;
+    margin: 0 auto;
+}
