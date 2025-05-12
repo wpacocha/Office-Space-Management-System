@@ -103,7 +103,7 @@ namespace OfficeSpaceManagementSystem.Tests
             foreach (var teamReservations in reservationsByTeam)
             {
                 var zones = teamReservations.Value
-                    .Select(r => r.assignedDesk!.Zone.Name)
+                    .Select(r => r.assignedDesk?.Zone.Name)
                     .Distinct()
                     .ToList();
 
@@ -111,7 +111,7 @@ namespace OfficeSpaceManagementSystem.Tests
 
                 foreach (var reservation in teamReservations.Value)
                 {
-                    _output.WriteLine($"    Reservation {reservation.Id}; Zone {reservation.assignedDesk!.Zone.Name}");
+                    _output.WriteLine($"    Reservation {reservation.Id}; Zone {reservation.assignedDesk?.Zone.Name}");
                 }
             }
 

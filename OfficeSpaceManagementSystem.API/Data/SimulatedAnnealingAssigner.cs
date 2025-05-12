@@ -9,10 +9,9 @@ namespace OfficeSpaceManagementSystem.API.Data
         public List<Reservation> Run(
             List<Reservation> reservations,
             List<Desk> desks,
-            int maxIterations = 100_000,
-            double initialTemperature = 10_000.0,
+            double initialTemperature = 100_000.0,
             double endTemperature = 1.0,
-            double coolingRate = 0.998)
+            double coolingRate = 0.9998)
         {
             var current = GenerateInitialSolution(reservations, desks);
             var best = Clone(current);
@@ -21,7 +20,7 @@ namespace OfficeSpaceManagementSystem.API.Data
             int currentScore = CalculateScore(current, desks);
             int bestScore = currentScore;
 
-            for (int i = 0; i < maxIterations && temperature > endTemperature; i++)
+            for (int i = 0; temperature > endTemperature; i++)
             {
                 var neighbor = Mutate(Clone(current));
                 int neighborScore = CalculateScore(neighbor, desks);
@@ -47,14 +46,51 @@ namespace OfficeSpaceManagementSystem.API.Data
         private List<Reservation> GenerateInitialSolution(List<Reservation> reservations, List<Desk> desks)
         {
             var copy = Clone(reservations);
-            var shuffledDesks = desks.OrderBy(_ => _random.Next()).ToList();
-            var queue = new Queue<Desk>(shuffledDesks);
 
-            foreach (var r in copy)
+            var desksByZone = desks
+                .GroupBy(d => d.Zone.Id)
+                .OrderByDescending(g => g.Count())
+                .ToDictionary(g => g.Key, g => new Queue<Desk>(g.ToList()));
+
+            var reservationsByTeam = copy
+                .GroupBy(r => r.User.Team.Id)
+                .ToDictionary(g => g.Key, g => g.ToList());
+
+            foreach (var reservationGroup in reservationsByTeam.Values)
             {
-                if (queue.Count > 0)
+                var teamSize = reservationGroup.Count();
+
+                foreach (var (zoneId, desksInZone) in desksByZone)
                 {
-                    r.AssignedDeskId = queue.Dequeue().Id;
+                    if (desksInZone.Count >= teamSize)
+                    {
+                        for (int i = 0; i < teamSize; i++)
+                        {
+                            var desk = desksInZone.Dequeue();
+                            reservationGroup[i].AssignedDeskId = desk.Id;
+                        }
+                        desksByZone[zoneId] = desksInZone;
+                        break;
+                    }
+                }
+            }
+
+            foreach (var reservation in copy)
+            {
+                if (reservation.AssignedDeskId == null)
+                {
+                    var availableDesks = desksByZone
+                        .Where(d => d.Value.Count > 0);
+
+                    var desk = availableDesks.FirstOrDefault().Value?.Dequeue();
+                    if (desk != null)
+                    {
+                        reservation.AssignedDeskId = desk.Id;
+                    }
+                    else
+                    {
+                        reservation.AssignedDeskId = null; // No desk available
+                    }
                 }
             }
 
@@ -103,28 +139,11 @@ namespace OfficeSpaceManagementSystem.API.Data
         {
             int score = 0;
 
-            //var groupedByZone = reservations
-            //    .Where(r => r.AssignedDeskId != null)
-            //    .GroupBy(r => desks.First(d => d.Id == r.AssignedDeskId).Zone);
-
-            //foreach (var zoneGroup in groupedByZone)
-            //{
-            //    var zone = zoneGroup.Key;
-            //    var reservationsInZone = zoneGroup.ToList();
-
-            //    int prefWide = reservationsInZone.Count(r => r.DeskTypePref == DeskType.WideMonitor);
-            //    int prefDual = reservationsInZone.Count(r => r.DeskTypePref == DeskType.DualMonitor);
-
-            //    int deskWide = zone.Desks.Count(d => d.DeskType == DeskType.WideMonitor);
-            //    int deskDual = zone.Desks.Count(d => d.DeskType == DeskType.DualMonitor);
-
-            //    score += Math.Abs(prefWide - deskWide);
-            //    score += Math.Abs(prefDual - deskDual);
-            //}
-
             var reservationsByTeam = reservations
                 .Where(r => r.AssignedDeskId != null)
                 .GroupBy(r => r.User.Team.Id);
+
+            var maxTeamSize = reservationsByTeam.Max(g => g.Count());
 
             foreach (var teamGroup in reservationsByTeam)
             {
@@ -136,7 +155,7 @@ namespace OfficeSpaceManagementSystem.API.Data
 
                 if (floors.Count > 1)
                 {
-                    score += 1_000_000;
+                    score += 10_000_000;
                 }
 
                 var zones = teamGroup
@@ -149,9 +168,9 @@ namespace OfficeSpaceManagementSystem.API.Data
                     int teamSize = teamGroup.Count();
 
                     if (zones.Count == 2)
-                        score += 500 * teamSize;
+                        score += 500 * (1 + maxTeamSize - teamSize);
                     else
-                        score += 1000 * (zones.Count - 2) * teamSize;
+                        score += 1000 * (zones.Count - 2) * (1 + maxTeamSize - teamSize);
                 }
             }
 
