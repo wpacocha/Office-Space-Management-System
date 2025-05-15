@@ -1,45 +1,42 @@
-import { useState, useEffect } from 'react';
+import { ClipLoader } from 'react-spinners';
+import React, { useState, useEffect } from 'react';
 
 function ReservationList() {
+    const [loading, setLoading] = useState(true);
     const [reservations, setReservations] = useState([]);
-    const [error, setError] = useState(null);
 
     useEffect(() => {
-        // Tymczasowe mockowane dane
-        const mockData = [
-            { date: '2025-05-10', zonePreference: 1, deskTypePref: 'Standard' },
-            { date: '2025-05-12', zonePreference: 2, deskTypePref: 'DualMonitor' }
-        ];
-
-        // Udawaj fetch i ustaw dane
         setTimeout(() => {
-            setReservations(mockData);
-            setError(null);
-        }, 500);
+            setReservations([
+                { date: '2025-05-10', zonePreference: 1, deskTypePref: 'Standard' },
+                { date: '2025-05-12', zonePreference: 2, deskTypePref: 'Dual Monitor' },
+            ]);
+            setLoading(false);
+        }, 2000);
     }, []);
 
     return (
-        <div>
-            <h2>Moje rezerwacje</h2>
-            {error && <p style={{ color: 'red' }}>B³¹d pobierania danych</p>}
-            <table border="1">
-                <thead>
-                    <tr>
-                        <th>Data</th>
-                        <th>Strefa</th>
-                        <th>Typ biurka</th>
-                    </tr>
-                </thead>
-                <tbody>
+        <div className="max-w-2xl mx-auto p-8 bg-white dark:bg-gray-800 rounded-2xl shadow-md">
+            <h2 className="text-2xl font-bold mb-6">My Reservations</h2>
+            {loading ? (
+                <div className="flex justify-center items-center h-96">
+                    <ClipLoader color="#6366f1" loading={loading} size={50} />
+                </div>
+            ) : (
+                <div className="space-y-4">
                     {reservations.map((res, index) => (
-                        <tr key={index}>
-                            <td>{res.date}</td>
-                            <td>Strefa {res.zonePreference}</td>
-                            <td>{res.deskTypePref}</td>
-                        </tr>
+                        <div key={index} className="p-4 bg-white dark:bg-gray-700 rounded-2xl shadow flex justify-between">
+                            <div>
+                                <h3 className="font-semibold">{res.date}</h3>
+                                <p>Zone: {res.zonePreference}</p>
+                            </div>
+                            <div className="text-right">
+                                <p>Desk Type: {res.deskTypePref}</p>
+                            </div>
+                        </div>
                     ))}
-                </tbody>
-            </table>
+                </div>
+            )}
         </div>
     );
 }
