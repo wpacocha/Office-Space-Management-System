@@ -122,7 +122,7 @@ namespace OfficeSpaceManagementSystem.API.Data
                 User = r.User,
                 Date = r.Date,
                 CreatedAt = r.CreatedAt,
-                ZonePreference = r.ZonePreference,
+                isFocusMode = r.isFocusMode,
                 DeskTypePref = r.DeskTypePref,
                 AssignedDeskId = r.AssignedDeskId,
                 assignedDesk = r.assignedDesk

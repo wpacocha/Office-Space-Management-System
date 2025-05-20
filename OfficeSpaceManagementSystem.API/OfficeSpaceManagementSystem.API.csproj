@@ -19,8 +19,12 @@
   </ItemGroup>
   <ItemGroup>
     <None Remove="Loaders\" />
+    <None Remove="DTOs\" />
+    <None Remove="Controllers\" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Loaders\" />
+    <Folder Include="DTOs\" />
+    <Folder Include="Controllers\" />
   </ItemGroup>
 </Project>

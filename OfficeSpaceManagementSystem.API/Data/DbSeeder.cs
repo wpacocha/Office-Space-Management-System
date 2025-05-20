@@ -11,15 +11,12 @@ namespace OfficeSpaceManagementSystem.API.Data
     {
         public static void Seed(AppDbContext db, SeedOptions? options = null)
         {
+            db.Database.EnsureDeleted();     // 💥 Resetuje całą bazę (schema + dane)
+            db.Database.EnsureCreated();
+
             options ??= new SeedOptions();
 
-            db.Reservations.RemoveRange(db.Reservations);
-            db.Desks.RemoveRange(db.Desks);
-            db.Users.RemoveRange(db.Users);
-            db.Teams.RemoveRange(db.Teams);
-            db.SaveChanges();
-
-            if (!db.Zones.Any()) SeedZones(db);
+            SeedZones(db);
             SeedTeams(db, options);
             SeedUsers(db, options);
             SeedDesks(db);
@@ -141,7 +138,7 @@ namespace OfficeSpaceManagementSystem.API.Data
                     CreatedAt = DateTime.Now,
                     Date = options.ReservationDate,
                     DeskTypePref = type,
-                    ZonePreference = zone,
+                    isFocusMode = false,
                     assignedDesk = null
                 });
             }
