@@ -22,7 +22,7 @@ namespace OfficeSpaceManagementSystem.API.Models
         public DeskType DeskTypePref { get; set; }
 
         [Required]
-        public int ZonePreference { get; set; } // ⬅️ DODAJ TO
+        public bool isFocusMode { get; set; }
 
         [ForeignKey("Desk")]
         public int? AssignedDeskId { get; set; }

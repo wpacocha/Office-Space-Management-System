@@ -12,6 +12,9 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 
 var app = builder.Build();
 
+builder.Services.AddControllers();
+app.MapControllers();
+
 // Seeder
 using (var scope = app.Services.CreateScope())
 {
