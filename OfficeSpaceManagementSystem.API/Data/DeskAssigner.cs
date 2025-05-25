@@ -63,18 +63,9 @@ namespace OfficeSpaceManagementSystem.API.Data
             AssignSingleUsers(reservationsByTeam, desksByZone, zones, singleTeamTypes, failedAssignements);
             AssignBestFitTeams(reservationsByTeam, desksByZone, zones, otherTeamsTypes);
 
-            await _context.SaveChangesAsync();
+            AssignUsingMetaheuristic(reservationsByTeam, desksByZone, failedAssignements);
 
-            reservations = await _context.Reservations
-                .Include(r => r.User)
-                .ThenInclude(u => u.Team)
-                .Where(r => r.Date == date)
-                .ToListAsync();
-
-            var freeDesks = desksByZone.Values.SelectMany(q => q).ToList();
-            var unassignedReservations = reservationsByTeam.Values.SelectMany(q => q).ToList();
-
-            AssignUsingMetaheuristic(unassignedReservations, freeDesks, failedAssignements);
+            TryImproveDeskTypeMatch(reservationsByTeam, desks);
 
             await _context.SaveChangesAsync();
             return failedAssignements;
@@ -194,10 +185,13 @@ namespace OfficeSpaceManagementSystem.API.Data
         }
 
         private static void AssignUsingMetaheuristic(
-            List<Reservation> reservations,
-            List<Desk> desks,
+            Dictionary<Team, List<Reservation>> reservationsByTeam,
+            Dictionary<string, Queue<Desk>> desksByZone,
             List<string> failed)
         {
+            var desks = desksByZone.Values.SelectMany(q => q).ToList();
+            var reservations = reservationsByTeam.Values.SelectMany(q => q).ToList();
+
             var simulatedAnnealing = new SimulatedAnnealingAssigner();
             var optimizedReservations = simulatedAnnealing.Run(reservations, desks);
             for (int i = 0; i < reservations.Count; i++)
@@ -211,6 +205,140 @@ namespace OfficeSpaceManagementSystem.API.Data
                 else
                 {
                     reservations[i].AssignedDeskId = optimizedReservations[i].AssignedDeskId;
+                }
+            }
+
+            if (failed.Count > 0)
+                return;
+
+            var desksByZoneList = desksByZone.ToDictionary(
+                kvp => kvp.Key,
+                kvp => kvp.Value.ToList()
+            );
+
+            var deskById = desksByZoneList
+                .SelectMany(kvp => kvp.Value)
+                .ToDictionary(d => d.Id, d => d);
+
+            var reservationsByZone = new Dictionary<string, Dictionary<Team, List<Reservation>>>();
+
+            foreach (var reservation in reservations)
+            {
+                if (!deskById.TryGetValue((int)reservation.AssignedDeskId, out var desk)) continue;
+
+                var zone = desk.Zone.Name;
+                var team = reservation.User.Team;
+
+                if (!reservationsByZone.TryGetValue(zone, out var teamDict))
+                {
+                    teamDict = new Dictionary<Team, List<Reservation>>();
+                    reservationsByZone[zone] = teamDict;
+                }
+
+                if (!teamDict.TryGetValue(team, out var list))
+                {
+                    list = new List<Reservation>();
+                    teamDict[team] = list;
+                }
+
+                list.Add(reservation);
+            }
+
+            ReorganizeSeating(reservationsByZone, desksByZoneList);
+        }
+
+        private static void TryImproveDeskTypeMatch(
+            Dictionary<Team, List<Reservation>> reservationsByTeam,
+            List<Desk> allDesks)
+        {
+            var deskById = allDesks.ToDictionary(d => d.Id);
+
+            foreach (var (team, reservations) in reservationsByTeam)
+            {
+                if (reservations.Count <= 1) continue;
+
+                var teamReservations = reservations
+                    .Where(r => r.AssignedDeskId != null)
+                    .Select(r => (reservation: r, desk: deskById[r.AssignedDeskId!.Value]))
+                    .ToList();
+
+                for (int i = 0; i < teamReservations.Count; i++)
+                {
+                    var (reservationA, deskA) = teamReservations[i];
+                    if (deskA.DeskType == reservationA.DeskTypePref)
+                        continue;
+
+                    for (int j = i + 1; j < teamReservations.Count; j++)
+                    {
+                        var (reservationB, deskB) = teamReservations[j];
+                        if (deskB.DeskType == reservationB.DeskTypePref)
+                            continue;
+
+                        if (deskB.DeskType == reservationA.DeskTypePref && deskA.DeskType == reservationB.DeskTypePref)
+                        {
+                            (reservationA.AssignedDeskId, reservationB.AssignedDeskId) = (reservationB.AssignedDeskId, reservationA.AssignedDeskId);
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+
+        private static void ReorganizeSeating(
+            Dictionary<string, Dictionary<Team, List<Reservation>>> reservationsByZone,
+            Dictionary<string, List<Desk>> desksByZone)
+        {
+            foreach (var zoneKvp in reservationsByZone)
+            {
+                var zone = zoneKvp.Key;
+                var teamsInZone = zoneKvp.Value;
+
+                var desks = desksByZone[zone].OrderBy(d => d.Id).ToList();
+
+                var deskToReservation = desks
+                    .SelectMany(d => reservationsByZone[zone]
+                        .SelectMany(kvp => kvp.Value)
+                        .Where(r => r.AssignedDeskId == d.Id)
+                        .Select(r => (deskId: d.Id, reservation: r)))
+                    .ToDictionary(x => x.deskId, x => x.reservation);
+
+                var reservationsInOrder = desks
+                    .Where(d => deskToReservation.TryGetValue(d.Id, out _))
+                    .Select(d => deskToReservation[d.Id])
+                    .ToList();
+
+                for (int i = 0; i < reservationsInOrder.Count; i++)
+                {
+                    var current = reservationsInOrder[i];
+                    var currentTeam = current.User.Team;
+
+                    int chainStart = i;
+                    while (chainStart > 0 && reservationsInOrder[chainStart - 1].User.Team == currentTeam)
+                    {
+                        chainStart--;
+                    }
+
+                    var chainLength = i - chainStart + 1;
+                    int teamSize = reservationsByZone[zone][currentTeam].Count;
+
+                    if (chainLength >= teamSize)
+                        continue;
+
+                    for (int j = i + 1; j < reservationsInOrder.Count; j++)
+                    {
+                        if (reservationsInOrder[j].User.Team == currentTeam)
+                        {
+                            var targetIndex = i + 1;
+
+                            var r1 = reservationsInOrder[j];
+                            var r2 = reservationsInOrder[targetIndex];
+
+                            (r1.AssignedDeskId, r2.AssignedDeskId) = (r2.AssignedDeskId, r1.AssignedDeskId);
+                            (reservationsInOrder[j], reservationsInOrder[targetIndex]) = (reservationsInOrder[targetIndex], reservationsInOrder[j]);
+
+                            break;
+                        }
+                    }
                 }
             }
         }
