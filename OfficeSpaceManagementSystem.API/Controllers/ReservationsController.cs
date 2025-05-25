@@ -25,11 +25,22 @@ namespace OfficeSpaceManagementSystem.API.Controllers
             if (user == null)
                 return NotFound($"User with ID {dto.UserId} not found.");
 
+            var existing = _context.Reservations.FirstOrDefault(r => r.UserId == dto.UserId && r.Date == dto.Date);
+            if (existing != null)
+                return BadRequest("You already have a reservation for this day.");
+
+
             if (!dto.IsFocusMode)
             {
                 var team = _context.Teams.FirstOrDefault(t => t.name == dto.TeamName);
                 if (team == null)
-                    return BadRequest("Team not found.");
+                {
+                    team = new Team { name = dto.TeamName };
+                    _context.Teams.Add(team);
+                    await _context.SaveChangesAsync();
+                }
+                user.TeamId = team.Id;
+
 
                 user.TeamId = team.Id;
             }
@@ -107,6 +118,16 @@ namespace OfficeSpaceManagementSystem.API.Controllers
 
             return Ok(reservations);
         }
+        [HttpGet("/api/availability")]
+        public IActionResult GetAvailability([FromQuery] DateOnly date)
+        {
+            int totalDesks = _context.Desks.Count();
+            int reserved = _context.Reservations.Count(r => r.Date == date);
+            int available = totalDesks - reserved;
+
+            return Ok(new { available });
+        }
+
 
     }
 }
