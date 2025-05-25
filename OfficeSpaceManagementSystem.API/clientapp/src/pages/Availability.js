@@ -1,42 +1,41 @@
 import React, { useState, useEffect } from 'react';
 
 // Funkcja do generowania dostêpnych miejsc w biurze
-const getAvailableDesks = (date) => {
-    const mockData = {
-        '2025-05-10': 10, // Dostêpnych 10 miejsc na ten dzieñ
-        '2025-05-11': 8,
-        '2025-05-12': 12,
-        '2025-05-13': 9,
-        '2025-05-14': 7,
-        '2025-05-15': 11,
-        '2025-05-16': 5,
-    };
-
-    return mockData[date] || 0; // Zwracamy liczbê dostêpnych miejsc
+const getAvailableDesks = async (date) => {
+    try {
+        const res = await fetch(`/api/availability?date=${date}`);
+        const data = await res.json();
+        return data.available;
+    } catch (err) {
+        console.error("Error fetching availability:", err);
+        return 0;
+    }
 };
+
 
 function Availability() {
     const [availabilityData, setAvailabilityData] = useState(0);
     const [futureAvailability, setFutureAvailability] = useState([]);
 
     useEffect(() => {
-        // Zbieramy dane dostêpnoœci dla dzisiejszego dnia
-        const formattedDate = new Date().toISOString().split('T')[0]; // U¿ywamy formatu "YYYY-MM-DD"
-        setAvailabilityData(getAvailableDesks(formattedDate));
+        const loadAvailability = async () => {
+            const today = new Date().toISOString().split('T')[0];
+            const todayAvailable = await getAvailableDesks(today);
+            setAvailabilityData(todayAvailable);
 
-        // Zbieramy dane dostêpnoœci na kolejne 7 dni
-        const availabilityForNext7Days = [];
-        for (let i = 1; i <= 7; i++) {
-            const futureDate = new Date();
-            futureDate.setDate(futureDate.getDate() + i);
-            const futureFormattedDate = futureDate.toISOString().split('T')[0];
-            availabilityForNext7Days.push({
-                date: futureFormattedDate,
-                available: getAvailableDesks(futureFormattedDate),
-            });
-        }
+            const future = [];
+            for (let i = 1; i <= 7; i++) {
+                const d = new Date();
+                d.setDate(d.getDate() + i);
+                const dateStr = d.toISOString().split('T')[0];
+                const available = await getAvailableDesks(dateStr);
+                future.push({ date: dateStr, available });
+            }
 
-        setFutureAvailability(availabilityForNext7Days);
+            setFutureAvailability(future);
+        };
+
+        loadAvailability();
     }, []);
 
     return (

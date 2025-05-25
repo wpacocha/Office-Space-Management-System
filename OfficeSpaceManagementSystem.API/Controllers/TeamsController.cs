@@ -19,7 +19,7 @@ namespace OfficeSpaceManagementSystem.API.Controllers
         {
             var teams = _context.Teams
                 .Where(t => prefix == null || t.name.StartsWith(prefix))
-                .Select(t => t.name)
+                .Select(t => new { name = t.name })
                 .OrderBy(n => n)
                 .Take(20)
                 .ToList();
