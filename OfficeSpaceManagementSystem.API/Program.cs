@@ -10,9 +10,10 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlite("Data Source=office.db"));
 
+builder.Services.AddControllers();
+
 var app = builder.Build();
 
-builder.Services.AddControllers();
 app.MapControllers();
 
 // Seeder

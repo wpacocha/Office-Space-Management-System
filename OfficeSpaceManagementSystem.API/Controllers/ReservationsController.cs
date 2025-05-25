@@ -65,7 +65,7 @@ namespace OfficeSpaceManagementSystem.API.Controllers
                     r.Date,
                     r.CreatedAt,
                     r.DeskTypePref,
-                    r.IsFocusMode,
+                    r.isFocusMode,
                     AssignedDeskName = r.assignedDesk != null ? r.assignedDesk.Name : null
                 })
                 .OrderByDescending(r => r.Date)
@@ -98,7 +98,7 @@ namespace OfficeSpaceManagementSystem.API.Controllers
                     r.UserId,
                     UserName = r.User.Name,
                     TeamName = r.User.Team.name,
-                    r.IsFocusMode,
+                    r.isFocusMode,
                     r.DeskTypePref,
                     DeskName = r.assignedDesk != null ? r.assignedDesk.Name : null
                 })
