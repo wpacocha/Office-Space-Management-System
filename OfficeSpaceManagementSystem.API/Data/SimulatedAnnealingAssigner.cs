@@ -140,10 +140,15 @@ namespace OfficeSpaceManagementSystem.API.Data
             int score = 0;
 
             var reservationsByTeam = reservations
-                .Where(r => r.AssignedDeskId != null)
-                .GroupBy(r => r.User.Team.Id);
+             .Where(r => r.AssignedDeskId != null)
+             .GroupBy(r => r.User.Team.Id)
+             .ToList();
+
+            if (!reservationsByTeam.Any())
+                return int.MaxValue; // brak przypisań = bardzo zły wynik
 
             var maxTeamSize = reservationsByTeam.Max(g => g.Count());
+
 
             foreach (var teamGroup in reservationsByTeam)
             {

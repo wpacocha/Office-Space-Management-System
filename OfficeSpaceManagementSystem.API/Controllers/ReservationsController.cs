@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using OfficeSpaceManagementSystem.API.Data;
 using OfficeSpaceManagementSystem.API.DTOs;
 using OfficeSpaceManagementSystem.API.Models;
@@ -21,6 +22,20 @@ namespace OfficeSpaceManagementSystem.API.Controllers
         [HttpPost]
         public async Task<IActionResult> CreateReservation([FromBody] CreateReservationDto dto)
         {
+            var now = DateTime.Now;
+            var today = DateOnly.FromDateTime(now);
+            var requestedDate = dto.Date;
+
+            if (requestedDate == today)
+            {
+                return BadRequest("You cannot make a reservation for today.");
+            }
+
+            if (requestedDate == today.AddDays(1) && now.Hour >= 15)
+            {
+                return BadRequest("You can no longer make a reservation for tomorrow after 15:00.");
+            }
+
             var user = await _context.Users.FindAsync(dto.UserId);
             if (user == null)
                 return NotFound($"User with ID {dto.UserId} not found.");
@@ -118,16 +133,38 @@ namespace OfficeSpaceManagementSystem.API.Controllers
 
             return Ok(reservations);
         }
-        [HttpGet("/api/availability")]
-        public IActionResult GetAvailability([FromQuery] DateOnly date)
+        [HttpGet("availability")]
+        public IActionResult GetAvailability([FromQuery] DateOnly? date = null)
         {
-            int totalDesks = _context.Desks.Count();
-            int reserved = _context.Reservations.Count(r => r.Date == date);
-            int available = totalDesks - reserved;
+            var targetDate = date ?? DateOnly.FromDateTime(DateTime.Today);
 
-            return Ok(new { available });
+            var allDesks = _context.Desks.Include(d => d.Zone).ToList();
+            var reservedIds = _context.Reservations
+                .Where(r => r.Date == targetDate && r.AssignedDeskId != null)
+                .Select(r => r.AssignedDeskId.Value)
+                .ToHashSet();
+
+            var allTotal = allDesks.Count;
+            var allFree = allDesks.Count(d => !reservedIds.Contains(d.Id));
+
+            var focusZoneIds = _context.Zones
+                .Where(z => z.Type == ZoneType.Focus)
+                .Select(z => z.Id)
+                .ToList();
+
+            var focusDesks = allDesks
+                .Where(d => focusZoneIds.Contains(d.ZoneId))
+                .ToList();
+
+            var focusTotal = focusDesks.Count;
+            var focusFree = focusDesks.Count(d => !reservedIds.Contains(d.Id));
+
+            return Ok(new
+            {
+                date = targetDate,
+                all = new { free = allFree, total = allTotal },
+                focus = new { free = focusFree, total = focusTotal }
+            });
         }
-
-
     }
 }
