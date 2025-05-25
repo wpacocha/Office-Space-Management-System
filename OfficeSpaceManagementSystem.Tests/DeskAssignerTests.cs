@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using OfficeSpaceManagementSystem.API.Data;
 using OfficeSpaceManagementSystem.API.Loaders;
+using OfficeSpaceManagementSystem.API.Models;
 using Xunit;
 using Xunit.Abstractions;
 
@@ -61,7 +62,7 @@ namespace OfficeSpaceManagementSystem.Tests
 
                 foreach (var reservation in teamReservations.Value)
                 {
-                    _output.WriteLine($"    Reservation {reservation.Id}; Zone {reservation.assignedDesk!.Zone.Name}");
+                    _output.WriteLine($"    Reservation {reservation.Id}; Zone {reservation.assignedDesk!.Zone.Name}; {reservation.assignedDesk.Name}");
                 }
             }
 
@@ -111,7 +112,7 @@ namespace OfficeSpaceManagementSystem.Tests
 
                 foreach (var reservation in teamReservations.Value)
                 {
-                    _output.WriteLine($"    Reservation {reservation.Id}; Zone {reservation.assignedDesk?.Zone.Name}");
+                    _output.WriteLine($"    Reservation {reservation.Id}; Zone {reservation.assignedDesk!.Zone.Name}; {reservation.assignedDesk.Name}");
                 }
             }
 
@@ -224,6 +225,40 @@ namespace OfficeSpaceManagementSystem.Tests
             {
                 Assert.NotNull(reservation.AssignedDeskId);
             }
+        }
+
+        [Fact]
+        public async Task AssignAsync_ShouldAccountForDeskPreference()
+        {
+            var context = GetInMemoryContext();
+
+            var options = new SeedOptions();
+            DbSeeder.Seed(context, options);
+
+            var deskAssigner = new DeskAssigner(context);
+            var date = options.ReservationDate;
+
+            var failedTeams = await deskAssigner.AssignAsync(date);
+
+            var reservations = context.Reservations
+                .Include(r => r.assignedDesk)
+                .Where(r => r.Date == date)
+                .ToList();
+
+            Assert.All(reservations, r => Assert.NotNull(r.AssignedDeskId));
+
+            Assert.Empty(failedTeams);
+
+            var reservationsDeskPreferenceSatisfied = reservations
+                .Where(r => r.assignedDesk.DeskType == r.DeskTypePref)
+                .Count();
+
+            var reservationsDeskPreferenceNotSatisfied = reservations
+                .Where(r => r.assignedDesk.DeskType != r.DeskTypePref)
+                .Count();
+
+            _output.WriteLine($"    Preferation satisfied: {reservationsDeskPreferenceSatisfied}");
+            _output.WriteLine($"Preferation not satisfied: {reservationsDeskPreferenceNotSatisfied}");
         }
     }
 }
