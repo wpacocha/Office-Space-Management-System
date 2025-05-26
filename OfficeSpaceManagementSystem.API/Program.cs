@@ -19,9 +19,10 @@ app.MapControllers();
 // Seeder
 using (var scope = app.Services.CreateScope())
 {
-    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-    DbSeeder.Seed(db);
+    var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    DbSeeder.Seed(context); // bez rezerwacji
 }
+
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())

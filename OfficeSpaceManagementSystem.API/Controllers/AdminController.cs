@@ -1,3 +1,4 @@
+using System;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using OfficeSpaceManagementSystem.API.Data;
@@ -17,22 +18,25 @@ public class AdminController : ControllerBase
     }
 
     [HttpPost("seed")]
-    public IActionResult SeedDatabase([FromQuery] DateOnly? date = null, [FromQuery] int count = 100)
+    public IActionResult SeedReservationsOnly([FromQuery] DateOnly? date = null, [FromQuery] int count = 100)
     {
         var targetDate = date ?? DateOnly.FromDateTime(DateTime.Today);
 
-        DbSeeder.Seed(_context, new SeedOptions
-        {
-            ReservationDate = targetDate,
-            ReservationsCount = count
-        });
+        var oldReservations = _context.Reservations
+            .Where(r => r.Date == targetDate);
+        _context.Reservations.RemoveRange(oldReservations);
+        _context.SaveChanges();
 
-        return Ok($"Database seeded for {targetDate} with {count} reservations.");
+        ReservationGenerator.Generate(_context, targetDate, count);
+
+        return Ok($"Regenerated {count} reservations for {targetDate}.");
     }
+
+
     [HttpGet("focus-availability")]
     public IActionResult GetFocusAvailability()
     {
-        // policz dostêpne biurka w strefach typu Focus
+        // policz dostï¿½pne biurka w strefach typu Focus
         var focusZones = _context.Zones
             .Where(z => z.Type == ZoneType.Focus)
             .ToList();
@@ -85,4 +89,18 @@ public class AdminController : ControllerBase
             assigned
         });
     }
+
+    [HttpPost("generate-reservations")]
+    public IActionResult GenerateReservations([FromQuery] DateOnly? date = null, [FromQuery] int count = 200)
+    {
+        var targetDate = date ?? DateOnly.FromDateTime(DateTime.Today);
+
+        ReservationGenerator.Generate(_context, targetDate, count);
+
+        return Ok(new
+        {
+            message = $"Generated {count} reservations for {targetDate}."
+        });
+    }
+
 }

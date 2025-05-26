@@ -11,16 +11,20 @@ namespace OfficeSpaceManagementSystem.API.Data
     {
         public static void Seed(AppDbContext db, SeedOptions? options = null)
         {
-            db.Database.EnsureDeleted();     // 💥 Resetuje całą bazę (schema + dane)
-            db.Database.EnsureCreated();
-
             options ??= new SeedOptions();
 
-            SeedZones(db);
+            db.Reservations.RemoveRange(db.Reservations);
+            db.Desks.RemoveRange(db.Desks);
+            db.Users.RemoveRange(db.Users);
+            db.Teams.RemoveRange(db.Teams);
+            db.SaveChanges();
+
+            if (!db.Zones.Any())
+                SeedZones(db);
+
             SeedTeams(db, options);
             SeedUsers(db, options);
             SeedDesks(db);
-            SeedReservations(db, options);
         }
 
         private static void SeedZones(AppDbContext db)
@@ -35,7 +39,7 @@ namespace OfficeSpaceManagementSystem.API.Data
         {
             var teams = new List<Team>();
 
-            // Solo teams
+            // Solo 1–50
             for (int i = 1; i <= 50; i++)
                 teams.Add(new Team { name = $"Solo {i}" });
 
@@ -43,21 +47,35 @@ namespace OfficeSpaceManagementSystem.API.Data
             teams.Add(new Team { name = "HR" });
             teams.Add(new Team { name = "Executive" });
 
-            // Remaining teams
+            // Team A, B, ..., Z, AA, AB, ..., ZZ
             int toGenerate = options.TotalTeams - teams.Count;
-            char letter = 'A';
-            for (int i = 0; i < toGenerate; i++)
-            {
-                string name = $"Team {letter}";
-                if (i >= 26)
-                    name = $"Team {letter}{(char)('A' + (i - 26) % 26)}";
+            var nameSet = new HashSet<string>(teams.Select(t => t.name));
 
-                teams.Add(new Team { name = name });
-                if ((i + 1) % 26 == 0) letter++;
+            int index = 0;
+            while (teams.Count < options.TotalTeams)
+            {
+                string name = GenerateTeamName(index);
+                if (!nameSet.Contains(name))
+                {
+                    teams.Add(new Team { name = name });
+                    nameSet.Add(name);
+                }
+                index++;
             }
 
             db.Teams.AddRange(teams);
             db.SaveChanges();
+        }
+
+        private static string GenerateTeamName(int index)
+        {
+            string name = "";
+            do
+            {
+                name = (char)('A' + index % 26) + name;
+                index = index / 26 - 1;
+            } while (index >= 0);
+            return "Team " + name;
         }
 
         private static void SeedUsers(AppDbContext db, SeedOptions options)
@@ -69,7 +87,7 @@ namespace OfficeSpaceManagementSystem.API.Data
 
             foreach (var team in teams)
             {
-                int count = 1;
+                int count;
 
                 if (team.name == "HR") count = 8;
                 else if (team.name == "Executive") count = 16;
@@ -103,18 +121,23 @@ namespace OfficeSpaceManagementSystem.API.Data
 
             foreach (var zone in zones)
             {
-                DeskType currentType = zone.FirstDeskType;
+                int total = zone.TotalDesks;
+                int wideCount = zone.WideMonitorDesks;
+                int dualCount = zone.DualMonitorDesks;
 
-                for (int i = 0; i < zone.TotalDesks; i++)
+                var types = Enumerable.Repeat(DeskType.WideMonitor, wideCount)
+                    .Concat(Enumerable.Repeat(DeskType.DualMonitor, dualCount))
+                    .OrderBy(_ => Guid.NewGuid())
+                    .ToList();
+
+                for (int i = 0; i < types.Count; i++)
                 {
                     desks.Add(new Desk
                     {
                         ZoneId = zone.Id,
-                        DeskType = currentType,
+                        DeskType = types[i],
                         Name = $"{zone.Florr}-{zone.Name.Split('-')[1]}-{i}"
                     });
-
-                    currentType = currentType == DeskType.WideMonitor ? DeskType.DualMonitor : DeskType.WideMonitor;
                 }
             }
 
@@ -122,29 +145,5 @@ namespace OfficeSpaceManagementSystem.API.Data
             db.SaveChanges();
         }
 
-        private static void SeedReservations(AppDbContext db, SeedOptions options)
-        {
-            var users = db.Users.ToList().OrderBy(_ => Guid.NewGuid()).Take(options.ReservationsCount).ToList();
-            var reservations = new List<Reservation>();
-
-            for (int i = 0; i < users.Count; i++)
-            {
-                var type = options.DeskTypeSelector?.Invoke(i) ?? (DeskType)(i % 2);
-                var zone = options.ZonePreferenceSelector?.Invoke(i) ?? new Random().Next(1, 5);
-
-                reservations.Add(new Reservation
-                {
-                    UserId = users[i].Id,
-                    CreatedAt = DateTime.Now,
-                    Date = options.ReservationDate,
-                    DeskTypePref = type,
-                    isFocusMode = false,
-                    assignedDesk = null
-                });
-            }
-
-            db.Reservations.AddRange(reservations);
-            db.SaveChanges();
-        }
     }
 }
