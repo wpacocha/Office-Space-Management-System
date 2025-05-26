@@ -22,7 +22,7 @@ export default function ReservationForm() {
         }
 
         const timeoutId = setTimeout(() => {
-            fetch(`/api/teams?search=${teamName}`)
+            fetch(`/api/teams?prefix=${teamName}`)
                 .then(res => res.json())
                 .then(data => setSuggestions(data))
                 .catch(() => setSuggestions([]));

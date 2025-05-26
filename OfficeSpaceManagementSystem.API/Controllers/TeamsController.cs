@@ -18,9 +18,10 @@ namespace OfficeSpaceManagementSystem.API.Controllers
         public IActionResult GetTeams([FromQuery] string? prefix)
         {
             var teams = _context.Teams
-                .Where(t => prefix == null || t.name.StartsWith(prefix))
+                .AsEnumerable() // ⬅️ to przenosi resztę do pamięci (rozwiązuje problem z EF Core)
+                .Where(t => string.IsNullOrEmpty(prefix) || t.name.ToLower().StartsWith(prefix.ToLower()))
                 .Select(t => new { name = t.name })
-                .OrderBy(n => n)
+                .OrderBy(n => n.name)
                 .Take(20)
                 .ToList();
 
