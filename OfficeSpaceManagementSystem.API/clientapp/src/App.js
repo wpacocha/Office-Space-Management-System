@@ -1,7 +1,8 @@
 ﻿import { BrowserRouter, Routes, Route } from "react-router-dom";
 import ReservationForm from "./pages/ReservationForm";
 import ReservationList from "./pages/ReservationList";
-import Availability from "./pages/Availability";  // Dodaj ten import
+import Availability from "./pages/Availability";
+import AdminPanel from './pages/AdminPanel';
 import Navbar from "./components/Navbar";
 import { useState } from "react";
 
@@ -18,7 +19,8 @@ function App() {
                         <Routes>
                             <Route path="/" element={<ReservationForm />} />
                             <Route path="/history" element={<ReservationList />} />
-                            <Route path="/availability" element={<Availability />} />  {/* Dodaj nową trasę */}
+                            <Route path="/availability" element={<Availability />} /> 
+                            <Route path="/admin" element={<AdminPanel />} />
                         </Routes>
                     </main>
                 </div>

@@ -1,6 +1,9 @@
 ﻿import React, { useState, useEffect } from "react";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
+import { registerLocale } from "react-datepicker";
+import pl from "date-fns/locale/pl";
+registerLocale("pl", pl);
 
 export default function ReservationForm() {
     const [date, setDate] = useState("");
@@ -9,8 +12,9 @@ export default function ReservationForm() {
     const [suggestions, setSuggestions] = useState([]);
     const [message, setMessage] = useState("");
     const [focusMode, setFocusMode] = useState(false);
+    const [focusAvailable, setFocusAvailable] = useState(null);
 
-    //Ładowanie podpowiedzi zespołów
+    // Ładowanie podpowiedzi zespołów
     useEffect(() => {
         if (teamName.length < 2) {
             setSuggestions([]);
@@ -18,14 +22,35 @@ export default function ReservationForm() {
         }
 
         const timeoutId = setTimeout(() => {
-            fetch(`/api/teams?search=${teamName}`)
+            fetch(`/api/teams?prefix=${teamName}`)
                 .then(res => res.json())
                 .then(data => setSuggestions(data))
                 .catch(() => setSuggestions([]));
-        }, 300); // mały debounce
+        }, 300);
 
         return () => clearTimeout(timeoutId);
     }, [teamName]);
+
+    // Sprawdzanie dostępności Focus Mode
+    useEffect(() => {
+        if (!date) {
+            setFocusAvailable(null);
+            return;
+        }
+
+        const fetchFocus = async () => {
+            try {
+                const res = await fetch(`/api/reservations/availability?date=${date}`);
+                const data = await res.json();
+                setFocusAvailable(data.focus.free);
+                if (data.focus.free === 0) setFocusMode(false); // automatycznie odznacz, jeśli niedostępne
+            } catch {
+                setFocusAvailable(null);
+            }
+        };
+
+        fetchFocus();
+    }, [date]);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -51,6 +76,11 @@ export default function ReservationForm() {
     };
 
     const isFormValid = date && deskTypePref !== "" && (focusMode || teamName.trim() !== "");
+    const now = new Date();
+    const cutoffPassed = now.getHours() >= 15;
+
+    const minDate = new Date();
+    minDate.setDate(minDate.getDate() + (cutoffPassed ? 2 : 1));
 
     return (
         <div className="max-w-2xl mx-auto p-8 bg-white dark:bg-gray-800 rounded-2xl shadow-md">
@@ -63,10 +93,13 @@ export default function ReservationForm() {
                         onChange={(date) => setDate(date.toISOString().split('T')[0])}
                         dateFormat="yyyy-MM-dd"
                         placeholderText="Select a date"
-                        minDate={new Date()}
+                        minDate={minDate}
                         maxDate={new Date(new Date().setDate(new Date().getDate() + 7))}
+                        locale="pl"               
+                        calendarStartDay={1}    
                         className="w-full p-3 rounded-lg bg-gray-100 dark:bg-gray-700"
                     />
+
                 </div>
 
                 <div>
@@ -86,6 +119,7 @@ export default function ReservationForm() {
                         type="checkbox"
                         id="focusMode"
                         checked={focusMode}
+                        disabled={focusAvailable === 0}
                         onChange={() => setFocusMode(!focusMode)}
                         className="h-5 w-5"
                     />
@@ -93,6 +127,10 @@ export default function ReservationForm() {
                         I want a quiet area (Focus Mode)
                     </label>
                 </div>
+
+                {focusAvailable === 0 && (
+                    <p className="text-red-600 text-sm">⚠️ No Focus desks available for selected date</p>
+                )}
 
                 {!focusMode && (
                     <div>

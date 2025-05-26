@@ -27,8 +27,12 @@ obj/
 OfficeSpaceManagementSystem.API/Properties/launchSettings.json
 
 .vs/
-*.user
-*.suo
 *.db
 *.db-shm
 *.db-wal
+
+# Node/React
+node_modules/
+package-lock.json
+.env
+.env.*

@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom';
+﻿import { Link } from 'react-router-dom';
 
 export default function Navbar({ toggleDarkMode, darkMode }) {
     return (
@@ -13,6 +13,9 @@ export default function Navbar({ toggleDarkMode, darkMode }) {
                 <Link to="/availability" className="text-lg font-semibold hover:text-primary transition-colors">
                     Check Availability
                 </Link>
+                <Link to="/admin" className="text-lg font-semibold hover:text-primary transition-colors">
+                    Admin
+                </Link> {/* ⬅️ DODANY LINK */}
             </div>
             <button
                 onClick={toggleDarkMode}
