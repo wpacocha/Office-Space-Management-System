@@ -11,8 +11,7 @@
     {
       "minSize": 1,
       "maxSize": 1,
-      "priorityTypes": [ "Focus", "Audio", "DuoFocus", "WarRoom", "Standard"]
-    },
+      "priorityTypes": [ "Focus", "Audio", "DuoFocus", "WarRoom", "Standard", "Executive"]
     {
       "minSize": 2,
       "maxSize": 15,
