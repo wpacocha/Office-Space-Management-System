@@ -27,7 +27,6 @@ namespace OfficeSpaceManagementSystem.API.Data
                     CreatedAt = DateTime.Now,
                     Date = date,
                     DeskTypePref = (DeskType)(i % 2),
-                    ZonePreference = random.Next(1, 5),
                     isFocusMode = true,
                     AssignedDeskId = null
                 });
@@ -44,7 +43,6 @@ namespace OfficeSpaceManagementSystem.API.Data
                     CreatedAt = DateTime.Now,
                     Date = date,
                     DeskTypePref = (DeskType)(i % 2),
-                    ZonePreference = random.Next(1, 5),
                     isFocusMode = false,
                     AssignedDeskId = null
                 });

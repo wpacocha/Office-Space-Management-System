@@ -9,10 +9,9 @@ namespace OfficeSpaceManagementSystem.API.Data
         public int MinUsersPerTeam { get; set; } = 1;
         public int MaxUsersPerTeam { get; set; } = 15;
 
-        public int ReservationsCount { get; set; } = null;
-        public DateOnly ReservationDate { get; set; } = null;
+        public int ReservationsCount { get; set; } = 200;
+        public DateOnly ReservationDate { get; set; } = new DateOnly(2025, 5, 28);
 
         public Func<int, DeskType>? DeskTypeSelector { get; set; } = null;
-        public Func<int, int>? ZonePreferenceSelector { get; set; } = null;
     }
 }
