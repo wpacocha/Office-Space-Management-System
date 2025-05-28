@@ -18,19 +18,24 @@ public class AdminController : ControllerBase
     }
 
     [HttpPost("seed")]
-    public IActionResult SeedReservationsOnly([FromQuery] DateOnly? date = null, [FromQuery] int count = 100)
+    public IActionResult SeedAll([FromQuery] DateOnly? date = null, [FromQuery] int count = 200)
     {
         var targetDate = date ?? DateOnly.FromDateTime(DateTime.Today);
 
-        var oldReservations = _context.Reservations
-            .Where(r => r.Date == targetDate);
-        _context.Reservations.RemoveRange(oldReservations);
-        _context.SaveChanges();
+        var options = new SeedOptions
+        {
+            ReservationDate = targetDate,
+            ReservationsCount = count
+        };
 
-        ReservationGenerator.Generate(_context, targetDate, count);
+        DbSeeder.Seed(_context, options);
 
-        return Ok($"Regenerated {count} reservations for {targetDate}.");
+        return Ok(new
+        {
+            message = $"Seeded database with {count} reservations for {targetDate}."
+        });
     }
+
 
 
     [HttpGet("focus-availability")]
