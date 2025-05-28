@@ -163,8 +163,10 @@ namespace OfficeSpaceManagementSystem.API.Controllers
             {
                 date = targetDate,
                 all = new { free = allFree, total = allTotal },
-                focus = new { free = focusFree, total = focusTotal }
+                focus = new { free = focusFree, total = focusTotal },
+                anyAvailable = allFree > 0 // ⬅️ to dodajemy
             });
         }
+
     }
 }

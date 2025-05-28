@@ -3,18 +3,21 @@ import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { registerLocale } from "react-datepicker";
 import pl from "date-fns/locale/pl";
+import { format } from "date-fns";
+
 registerLocale("pl", pl);
 
 export default function ReservationForm() {
     const [date, setDate] = useState("");
+    const [displayDate, setDisplayDate] = useState(null);
     const [deskTypePref, setDeskTypePref] = useState(0);
     const [teamName, setTeamName] = useState("");
     const [suggestions, setSuggestions] = useState([]);
     const [message, setMessage] = useState("");
     const [focusMode, setFocusMode] = useState(false);
     const [focusAvailable, setFocusAvailable] = useState(null);
+    const [anyAvailable, setAnyAvailable] = useState(true);
 
-    // Ładowanie podpowiedzi zespołów
     useEffect(() => {
         if (teamName.length < 2) {
             setSuggestions([]);
@@ -31,25 +34,27 @@ export default function ReservationForm() {
         return () => clearTimeout(timeoutId);
     }, [teamName]);
 
-    // Sprawdzanie dostępności Focus Mode
     useEffect(() => {
         if (!date) {
             setFocusAvailable(null);
+            setAnyAvailable(true);
             return;
         }
 
-        const fetchFocus = async () => {
+        const fetchAvailability = async () => {
             try {
                 const res = await fetch(`/api/reservations/availability?date=${date}`);
                 const data = await res.json();
                 setFocusAvailable(data.focus.free);
-                if (data.focus.free === 0) setFocusMode(false); // automatycznie odznacz, jeśli niedostępne
+                setAnyAvailable(data.anyAvailable);
+                if (data.focus.free === 0) setFocusMode(false);
             } catch {
                 setFocusAvailable(null);
+                setAnyAvailable(true);
             }
         };
 
-        fetchFocus();
+        fetchAvailability();
     }, [date]);
 
     const handleSubmit = async (e) => {
@@ -89,17 +94,19 @@ export default function ReservationForm() {
                 <div>
                     <label className="block mb-2 font-semibold">Date</label>
                     <DatePicker
-                        selected={date ? new Date(date) : null}
-                        onChange={(date) => setDate(date.toISOString().split('T')[0])}
-                        dateFormat="yyyy-MM-dd"
+                        selected={displayDate}
+                        onChange={(d) => {
+                            setDisplayDate(d);
+                            setDate(format(d, "yyyy-MM-dd")); // do backendu
+                        }}
+                        dateFormat="dd-MM-yyyy"
                         placeholderText="Select a date"
                         minDate={minDate}
                         maxDate={new Date(new Date().setDate(new Date().getDate() + 7))}
-                        locale="pl"               
-                        calendarStartDay={1}    
+                        locale="pl"
+                        calendarStartDay={1}
                         className="w-full p-3 rounded-lg bg-gray-100 dark:bg-gray-700"
                     />
-
                 </div>
 
                 <div>
@@ -132,6 +139,10 @@ export default function ReservationForm() {
                     <p className="text-red-600 text-sm">⚠️ No Focus desks available for selected date</p>
                 )}
 
+                {!anyAvailable && (
+                    <p className="text-red-600 text-sm text-center">❌ No desks available for the selected date</p>
+                )}
+
                 {!focusMode && (
                     <div>
                         <label className="block mb-2 font-semibold">Team Name</label>
@@ -154,10 +165,10 @@ export default function ReservationForm() {
 
                 <button
                     type="submit"
-                    disabled={!isFormValid}
-                    className={`w-full p-3 rounded-lg font-semibold transition-colors duration-300 ${isFormValid
-                        ? "bg-primary hover:bg-purple-700 text-white cursor-pointer"
-                        : "bg-gray-400 text-gray-200 cursor-not-allowed"
+                    disabled={!isFormValid || !anyAvailable}
+                    className={`w-full p-3 rounded-lg font-semibold transition-colors duration-300 ${isFormValid && anyAvailable
+                            ? "bg-primary hover:bg-purple-700 text-white cursor-pointer"
+                            : "bg-gray-400 text-gray-200 cursor-not-allowed"
                         }`}
                 >
                     Reserve
