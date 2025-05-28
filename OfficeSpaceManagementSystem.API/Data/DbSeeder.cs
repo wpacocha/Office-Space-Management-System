@@ -25,6 +25,7 @@ namespace OfficeSpaceManagementSystem.API.Data
             SeedTeams(db, options);
             SeedUsers(db, options);
             SeedDesks(db);
+            ReservationGenerator.Generate(db, options.ReservationDate, options.ReservationsCount);
         }
 
         private static void SeedZones(AppDbContext db)
@@ -39,8 +40,8 @@ namespace OfficeSpaceManagementSystem.API.Data
         {
             var teams = new List<Team>();
 
-            // Solo 1–50
-            for (int i = 1; i <= 50; i++)
+            // Solo 1–22
+            for (int i = 1; i <= 22; i++)
                 teams.Add(new Team { name = $"Solo {i}" });
 
             // HR & Executive

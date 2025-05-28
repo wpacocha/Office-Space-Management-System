@@ -11,14 +11,12 @@
     {
       "minSize": 1,
       "maxSize": 1,
-      "priorityTypes": [ "Focus", "Audio", "DuoFocus", "WarRoom", "Standard", "Executive", "HR" ]
+      "priorityTypes": [ "Focus", "Audio", "DuoFocus", "WarRoom", "Standard"]
     },
     {
       "minSize": 2,
       "maxSize": 15,
-      "priorityTypes": [ "DuoFocus", "WarRoom", "Standard", "Audio", "HR", "Executive", "Focus" ]
+      "priorityTypes": [ "DuoFocus", "WarRoom", "Standard", "Audio", "Focus" ]
     }
   ]
 }
-
-//fix bug
