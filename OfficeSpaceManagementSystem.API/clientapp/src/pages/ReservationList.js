@@ -48,7 +48,7 @@ function ReservationList() {
                         <div key={index} className="p-4 bg-white dark:bg-gray-700 rounded-2xl shadow flex justify-between items-center">
                             <div>
                                 <h3 className="font-semibold">{res.date}</h3>
-                                <p>Desk Type: {deskTypeName(res.deskTypePref)}</p>
+                                <p>Desk Type: {res.assignedDeskType !== null ? deskTypeName(res.assignedDeskType) : "Not assigned"}</p>
                                 <p>Focus Mode: {res.isFocusMode ? "Yes" : "No"}</p>
                                 {res.assignedDeskName && <p>Desk: {res.assignedDeskName}</p>}
                             </div>

@@ -139,16 +139,16 @@ namespace OfficeSpaceManagementSystem.API.Controllers
             var targetDate = date ?? DateOnly.FromDateTime(DateTime.Today);
 
             var allDesks = _context.Desks.Include(d => d.Zone).ToList();
-            var reservedIds = _context.Reservations
-                .Where(r => r.Date == targetDate && r.AssignedDeskId != null)
-                .Select(r => r.AssignedDeskId.Value)
-                .ToHashSet();
 
-            var allTotal = allDesks.Count;
-            var allFree = allDesks.Count(d => !reservedIds.Contains(d.Id));
+            var reservations = _context.Reservations
+                .Where(r => r.Date == targetDate)
+                .ToList();
 
             var focusZoneIds = _context.Zones
-                .Where(z => z.Type == ZoneType.Focus)
+                .Where(z =>
+                    z.Type == ZoneType.Focus ||
+                    z.Type == ZoneType.DuoFocus ||
+                    z.Type == ZoneType.WarRoom)
                 .Select(z => z.Id)
                 .ToList();
 
@@ -156,15 +156,20 @@ namespace OfficeSpaceManagementSystem.API.Controllers
                 .Where(d => focusZoneIds.Contains(d.ZoneId))
                 .ToList();
 
+            var allTotal = allDesks.Count;
+            var allReservedCount = reservations.Count;
+            var allFree = allTotal - allReservedCount;
+
             var focusTotal = focusDesks.Count;
-            var focusFree = focusDesks.Count(d => !reservedIds.Contains(d.Id));
+            var focusReservedCount = reservations.Count(r => r.isFocusMode);
+            var focusFree = focusTotal - focusReservedCount;
 
             return Ok(new
             {
                 date = targetDate,
                 all = new { free = allFree, total = allTotal },
                 focus = new { free = focusFree, total = focusTotal },
-                anyAvailable = allFree > 0 // ⬅️ to dodajemy
+                anyAvailable = allFree > 0
             });
         }
 

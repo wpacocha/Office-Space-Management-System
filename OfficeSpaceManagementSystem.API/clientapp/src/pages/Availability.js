@@ -46,23 +46,22 @@ function Availability() {
         loadAvailability();
     }, []);
 
-
     return (
-        <div className="max-w-2xl mx-auto p-8 bg-white dark:bg-gray-800 rounded-2xl shadow-md">
+        <div className="max-w-2xl mx-auto p-8 bg-white dark:bg-gray-800 text-black dark:text-white rounded-2xl shadow-md">
             <h2 className="text-2xl font-bold mb-6">Available Desks</h2>
 
             <h3 className="text-xl font-semibold mb-4">Available Desks Today</h3>
             {availabilityData && (
-                <div className="p-4 bg-white dark:bg-gray-700 rounded-2xl shadow flex flex-col space-y-1">
+                <div className="p-4 bg-gray-100 dark:bg-gray-700 rounded-2xl shadow space-y-1">
                     <p>💼 All: <strong>{availabilityData.all.free}</strong> / {availabilityData.all.total}</p>
                     <p>🧠 Focus: <strong>{availabilityData.focus.free}</strong> / {availabilityData.focus.total}</p>
                 </div>
             )}
 
-            <h3 className="text-xl font-semibold mt-6 mb-4">Available Desks for the Next 7 Days</h3>
+            <h3 className="text-xl font-semibold mt-6 mb-4">Next 7 Days</h3>
             <div className="space-y-4">
                 {futureAvailability.map((item, index) => (
-                    <div key={index} className="p-4 bg-white dark:bg-gray-700 rounded-2xl shadow flex flex-col space-y-1">
+                    <div key={index} className="p-4 bg-gray-100 dark:bg-gray-700 rounded-2xl shadow space-y-1">
                         <h3 className="font-semibold">{item.date}</h3>
                         <p>💼 All: <strong>{item.all.free}</strong> / {item.all.total}</p>
                         <p>🧠 Focus: <strong>{item.focus.free}</strong> / {item.focus.total}</p>
