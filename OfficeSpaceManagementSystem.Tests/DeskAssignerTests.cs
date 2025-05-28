@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.Data.Sqlite;
+using Microsoft.EntityFrameworkCore;
 using OfficeSpaceManagementSystem.API.Data;
 using OfficeSpaceManagementSystem.API.Loaders;
 using OfficeSpaceManagementSystem.API.Models;
@@ -18,11 +19,17 @@ namespace OfficeSpaceManagementSystem.Tests
 
         private AppDbContext GetInMemoryContext()
         {
+            var connection = new SqliteConnection("DataSource=:memory:");
+            connection.Open();
+
             var options = new DbContextOptionsBuilder<AppDbContext>()
-                .UseInMemoryDatabase(Guid.NewGuid().ToString())
+                .UseSqlite(connection)
                 .Options;
 
-            return new AppDbContext(options);
+            var context = new AppDbContext(options);
+            context.Database.EnsureCreated();
+
+            return context;
         }
 
         [Fact]
