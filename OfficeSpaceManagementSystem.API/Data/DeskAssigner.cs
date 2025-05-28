@@ -117,7 +117,7 @@ namespace OfficeSpaceManagementSystem.API.Data
             List<string> failed)
         {
             var onePersonTeams = reservationsByTeam
-                .Where(kvp => kvp.Value.Count == 1)
+                .Where(kvp => kvp.Key.name.StartsWith("Solo"))
                 .ToList();
 
             foreach (var (team, reservations) in onePersonTeams)
