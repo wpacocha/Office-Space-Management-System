@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using Microsoft.EntityFrameworkCore;
 
 namespace OfficeSpaceManagementSystem.API.Data
 {
@@ -19,6 +20,12 @@ namespace OfficeSpaceManagementSystem.API.Data
             db.Teams.RemoveRange(db.Teams);
             db.Zones.RemoveRange(db.Zones);
             db.SaveChanges();
+
+            db.Database.ExecuteSqlRaw("DELETE FROM sqlite_sequence WHERE name = 'Users';");
+            db.Database.ExecuteSqlRaw("DELETE FROM sqlite_sequence WHERE name = 'Teams';");
+            db.Database.ExecuteSqlRaw("DELETE FROM sqlite_sequence WHERE name = 'Desks';");
+            db.Database.ExecuteSqlRaw("DELETE FROM sqlite_sequence WHERE name = 'Reservations';");
+            db.Database.ExecuteSqlRaw("DELETE FROM sqlite_sequence WHERE name = 'Zones';");
 
             SeedZones(db);
             Console.WriteLine($"[SEED] Zones: {db.Zones.Count()}");
