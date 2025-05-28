@@ -17,15 +17,15 @@ namespace OfficeSpaceManagementSystem.API.Data
             db.Desks.RemoveRange(db.Desks);
             db.Users.RemoveRange(db.Users);
             db.Teams.RemoveRange(db.Teams);
+            db.Zones.RemoveRange(db.Zones);
             db.SaveChanges();
 
-            if (!db.Zones.Any())
-                SeedZones(db);
-
+            SeedZones(db);
+            Console.WriteLine($"[SEED] Zones: {db.Zones.Count()}");
             SeedTeams(db, options);
             SeedUsers(db, options);
             SeedDesks(db);
-            ReservationGenerator.Generate(db, options.ReservationDate, options.ReservationsCount);
+            ReservationGenerator.Generate(db, options.ReservationDate, options.ReservationsCount, options.FocusModePercentage);
         }
 
         private static void SeedZones(AppDbContext db)
@@ -122,14 +122,24 @@ namespace OfficeSpaceManagementSystem.API.Data
 
             foreach (var zone in zones)
             {
-                int total = zone.TotalDesks;
-                int wideCount = zone.WideMonitorDesks;
-                int dualCount = zone.DualMonitorDesks;
+                var types = new List<DeskType>();
 
-                var types = Enumerable.Repeat(DeskType.WideMonitor, wideCount)
-                    .Concat(Enumerable.Repeat(DeskType.DualMonitor, dualCount))
-                    .OrderBy(_ => Guid.NewGuid())
-                    .ToList();
+                // Dodaj wide monitory
+                for (int i = 0; i < zone.WideMonitorDesks; i++)
+                    types.Add(DeskType.WideMonitor);
+
+                // Dodaj dual monitory
+                for (int i = 0; i < zone.DualMonitorDesks; i++)
+                    types.Add(DeskType.DualMonitor);
+
+                // Sprawdzenie bezpieczeństwa
+                if (types.Count != zone.TotalDesks)
+                {
+                    Console.WriteLine($"[WARN] Mismatch in zone {zone.Name}: expected {zone.TotalDesks}, got {types.Count}");
+                }
+
+                // Opcjonalne przetasowanie
+                types = types.OrderBy(_ => Guid.NewGuid()).ToList();
 
                 for (int i = 0; i < types.Count; i++)
                 {
@@ -144,7 +154,9 @@ namespace OfficeSpaceManagementSystem.API.Data
 
             db.Desks.AddRange(desks);
             db.SaveChanges();
+            Console.WriteLine($"[SEED] Biurek w bazie: {db.Desks.Count()}");
         }
+
 
     }
 }

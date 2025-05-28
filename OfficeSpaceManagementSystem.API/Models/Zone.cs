@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using System.Text.Json.Serialization;
 
 namespace OfficeSpaceManagementSystem.API.Models
 {
@@ -20,10 +21,10 @@ namespace OfficeSpaceManagementSystem.API.Models
         [Required]
         public int TotalDesks { get; set; }
 
-        [Required]
+        [JsonPropertyName("WideMonitorDesks")]
         public int WideMonitorDesks { get; set; }
 
-        [Required]
+        [JsonPropertyName("DualMonitorDesks")]
         public int DualMonitorDesks { get; set; }
 
         [Required]

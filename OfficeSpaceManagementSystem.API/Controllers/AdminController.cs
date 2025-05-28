@@ -95,18 +95,4 @@ public class AdminController : ControllerBase
             assigned
         });
     }
-
-    [HttpPost("generate-reservations")]
-    public IActionResult GenerateReservations([FromQuery] DateOnly? date = null, [FromQuery] int count = 200)
-    {
-        var targetDate = date ?? DateOnly.FromDateTime(DateTime.Today);
-
-        ReservationGenerator.Generate(_context, targetDate, count);
-
-        return Ok(new
-        {
-            message = $"Generated {count} reservations for {targetDate}."
-        });
-    }
-
 }

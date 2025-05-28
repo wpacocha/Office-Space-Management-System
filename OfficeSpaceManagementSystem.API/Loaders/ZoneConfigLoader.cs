@@ -19,8 +19,8 @@ namespace OfficeSpaceManagementSystem.API.Loaders
             public string Type { get; set; }
             public int Floor { get; set; }
             public int TotalDesks { get; set; }
-            public int WideMonitorsDesks { get; set; }
-            public int DualMonitor { get; set; }
+            public int WideMonitorDesks { get; set; }
+            public int DualMonitorDesks { get; set; }
             public string FirstDeskType { get; set; }
         }
 
@@ -42,8 +42,8 @@ namespace OfficeSpaceManagementSystem.API.Loaders
                     Type = Enum.Parse<ZoneType>(entry.Type),
                     Florr = entry.Floor,
                     TotalDesks = entry.TotalDesks,
-                    WideMonitorDesks = entry.WideMonitorsDesks,
-                    DualMonitorDesks = entry.DualMonitor,
+                    WideMonitorDesks = entry.WideMonitorDesks,
+                    DualMonitorDesks = entry.DualMonitorDesks,
                     FirstDeskType = Enum.Parse<DeskType>(entry.FirstDeskType)
                 });
             }

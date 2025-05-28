@@ -1,29 +1,31 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using OfficeSpaceManagementSystem.API.Models;
 
 namespace OfficeSpaceManagementSystem.API.Data
 {
     public static class ReservationGenerator
     {
-        public static void Generate(AppDbContext db, DateOnly date, int count)
+        public static void Generate(AppDbContext db, DateOnly date, int count, double focusModePercentage)
         {
             var random = new Random();
-
             var users = db.Users.ToList().OrderBy(_ => Guid.NewGuid()).ToList();
+
             var soloUsers = users
                 .Where(u => u.Team.name.StartsWith("Solo"))
-                .Take(22)
                 .ToList();
 
             var reservations = new List<Reservation>();
 
-            int focusCount = Math.Min(22, count / 10); // np. 10% użytkowników z Focus mode
-            for (int i = 0; i < focusCount && i < soloUsers.Count; i++)
+            int maxFocus = Math.Min(soloUsers.Count, (int)(count * focusModePercentage));
+            var focusUsers = soloUsers.Take(maxFocus).ToList();
+
+            for (int i = 0; i < focusUsers.Count; i++)
             {
                 reservations.Add(new Reservation
                 {
-                    UserId = soloUsers[i].Id,
+                    UserId = focusUsers[i].Id,
                     CreatedAt = DateTime.Now,
                     Date = date,
                     DeskTypePref = (DeskType)(i % 2),
@@ -32,10 +34,17 @@ namespace OfficeSpaceManagementSystem.API.Data
                 });
             }
 
-            int generalCount = count - focusCount;
-            var remainingUsers = users.Except(soloUsers).Take(generalCount).ToList();
+            int generalCount = count - reservations.Count;
+            var focusUserIds = focusUsers.Select(u => u.Id).ToHashSet();
+            var remainingUsers = users.Where(u => !focusUserIds.Contains(u.Id)).Take(generalCount).ToList();
 
-            for (int i = 0; i < remainingUsers.Count; i++)
+            if (remainingUsers.Count < generalCount)
+            {
+                Console.WriteLine($"[WARN] Only {remainingUsers.Count} general users available for {generalCount} reservations.");
+                generalCount = remainingUsers.Count;
+            }
+
+            for (int i = 0; i < generalCount; i++)
             {
                 reservations.Add(new Reservation
                 {
@@ -50,6 +59,13 @@ namespace OfficeSpaceManagementSystem.API.Data
 
             db.Reservations.AddRange(reservations);
             db.SaveChanges();
+
+            Console.WriteLine($"[SEED] Generated reservations:");
+            Console.WriteLine($" - Focus mode: {focusUsers.Count}");
+            Console.WriteLine($" - General: {generalCount}");
+            Console.WriteLine($" - Total: {reservations.Count}");
+            Console.WriteLine($" - Desks in DB: {db.Desks.Count()}");
+
         }
     }
 }

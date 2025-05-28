@@ -5,7 +5,7 @@
       "Type": "Standard",
       "Floor": 0,
       "TotalDesks": 15,
-      "WideMonitorsDesks": 5,
+      "WideMonitorDesks": 5,
       "DualMonitorDesks": 10,
       "FirstDeskType": "DualMonitor"
     },
@@ -14,8 +14,8 @@
       "Type": "Audio",
       "Floor": 0,
       "TotalDesks": 9,
-      "WideMonitorsDesks": 3,
-      "DualMonitor": 6,
+      "WideMonitorDesks": 3,
+      "DualMonitorDesks": 6,
       "FirstDeskType": "WideMonitor"
     },
     {
@@ -23,8 +23,8 @@
       "Type": "Executive",
       "Floor": 0,
       "TotalDesks": 6,
-      "WideMonitorsDesks": 3,
-      "DualMonitor": 3,
+      "WideMonitorDesks": 3,
+      "DualMonitorDesks": 3,
       "FirstDeskType": "DualMonitor"
     },
     {
@@ -32,8 +32,8 @@
       "Type": "Executive",
       "Floor": 0,
       "TotalDesks": 4,
-      "WideMonitorsDesks": 2,
-      "DualMonitor": 2,
+      "WideMonitorDesks": 2,
+      "DualMonitorDesks": 2,
       "FirstDeskType": "WideMonitor"
     },
     {
@@ -41,8 +41,8 @@
       "Type": "Executive",
       "Floor": 0,
       "TotalDesks": 6,
-      "WideMonitorsDesks": 3,
-      "DualMonitor": 3,
+      "WideMonitorDesks": 3,
+      "DualMonitorDesks": 3,
       "FirstDeskType": "DualMonitor"
     },
     {
@@ -50,8 +50,8 @@
       "Type": "Audio",
       "Floor": 0,
       "TotalDesks": 6,
-      "WideMonitorsDesks": 6,
-      "DualMonitor": 0,
+      "WideMonitorDesks": 6,
+      "DualMonitorDesks": 0,
       "FirstDeskType": "WideMonitor"
     },
     {
@@ -59,8 +59,8 @@
       "Type": "Standard",
       "Floor": 0,
       "TotalDesks": 4,
-      "WideMonitorsDesks": 4,
-      "DualMonitor": 0,
+      "WideMonitorDesks": 4,
+      "DualMonitorDesks": 0,
       "FirstDeskType": "DualMonitor"
     },
     {
@@ -68,8 +68,8 @@
       "Type": "HR",
       "Floor": 0,
       "TotalDesks": 4,
-      "WideMonitorsDesks": 4,
-      "DualMonitor": 0,
+      "WideMonitorDesks": 4,
+      "DualMonitorDesks": 0,
       "FirstDeskType": "WideMonitor"
     },
     {
@@ -77,8 +77,8 @@
       "Type": "Standard",
       "Floor": 1,
       "TotalDesks": 24,
-      "WideMonitorsDesks": 8,
-      "DualMonitor": 16,
+      "WideMonitorDesks": 8,
+      "DualMonitorDesks": 16,
       "FirstDeskType": "DualMonitor"
     },
     {
@@ -86,8 +86,8 @@
       "Type": "Audio",
       "Floor": 1,
       "TotalDesks": 9,
-      "WideMonitorsDesks": 3,
-      "DualMonitor": 6,
+      "WideMonitorDesks": 3,
+      "DualMonitorDesks": 6,
       "FirstDeskType": "DualMonitor"
     },
     {
@@ -95,8 +95,8 @@
       "Type": "DuoFocus",
       "Floor": 1,
       "TotalDesks": 2,
-      "WideMonitorsDesks": 2,
-      "DualMonitor": 0,
+      "WideMonitorDesks": 2,
+      "DualMonitorDesks": 0,
       "FirstDeskType": "WideMonitor"
     },
     {
@@ -104,8 +104,8 @@
       "Type": "Audio",
       "Floor": 1,
       "TotalDesks": 9,
-      "WideMonitorsDesks": 3,
-      "DualMonitor": 6,
+      "WideMonitorDesks": 3,
+      "DualMonitorDesks": 6,
       "FirstDeskType": "WideMonitor"
     },
     {
@@ -113,8 +113,8 @@
       "Type": "Standard",
       "Floor": 1,
       "TotalDesks": 9,
-      "WideMonitorsDesks": 3,
-      "DualMonitor": 6,
+      "WideMonitorDesks": 3,
+      "DualMonitorDesks": 6,
       "FirstDeskType": "DualMonitor"
     },
     {
@@ -122,8 +122,8 @@
       "Type": "Standard",
       "Floor": 1,
       "TotalDesks": 21,
-      "WideMonitorsDesks": 10,
-      "DualMonitor": 11,
+      "WideMonitorDesks": 10,
+      "DualMonitorDesks": 11,
       "FirstDeskType": "WideMonitor"
     },
     {
@@ -131,8 +131,8 @@
       "Type": "Standard",
       "Floor": 1,
       "TotalDesks": 13,
-      "WideMonitorsDesks": 10,
-      "DualMonitor": 3,
+      "WideMonitorDesks": 10,
+      "DualMonitorDesks": 3,
       "FirstDeskType": "DualMonitor"
     },
     {
@@ -140,8 +140,8 @@
       "Type": "Standard",
       "Floor": 2,
       "TotalDesks": 18,
-      "WideMonitorsDesks": 6,
-      "DualMonitor": 12,
+      "WideMonitorDesks": 6,
+      "DualMonitorDesks": 12,
       "FirstDeskType": "WideMonitor"
     },
     {
@@ -149,8 +149,8 @@
       "Type": "Focus",
       "Floor": 2,
       "TotalDesks": 9,
-      "WideMonitorsDesks": 9,
-      "DualMonitor": 0,
+      "WideMonitorDesks": 9,
+      "DualMonitorDesks": 0,
       "FirstDeskType": "WideMonitor"
     },
     {
@@ -158,8 +158,8 @@
       "Type": "DuoFocus",
       "Floor": 2,
       "TotalDesks": 2,
-      "WideMonitorsDesks": 2,
-      "DualMonitor": 0,
+      "WideMonitorDesks": 2,
+      "DualMonitorDesks": 0,
       "FirstDeskType": "WideMonitor"
     },
     {
@@ -167,8 +167,8 @@
       "Type": "Focus",
       "Floor": 2,
       "TotalDesks": 9,
-      "WideMonitorsDesks": 9,
-      "DualMonitor": 0,
+      "WideMonitorDesks": 9,
+      "DualMonitorDesks": 0,
       "FirstDeskType": "DualMonitor"
     },
     {
@@ -176,8 +176,8 @@
       "Type": "Audio",
       "Floor": 2,
       "TotalDesks": 6,
-      "WideMonitorsDesks": 6,
-      "DualMonitor": 0,
+      "WideMonitorDesks": 6,
+      "DualMonitorDesks": 0,
       "FirstDeskType": "WideMonitor"
     },
     {
@@ -185,8 +185,8 @@
       "Type": "Standard",
       "Floor": 2,
       "TotalDesks": 4,
-      "WideMonitorsDesks": 4,
-      "DualMonitor": 0,
+      "WideMonitorDesks": 4,
+      "DualMonitorDesks": 0,
       "FirstDeskType": "WideMonitor"
     },
     {
@@ -194,8 +194,8 @@
       "Type": "Standard",
       "Floor": 2,
       "TotalDesks": 30,
-      "WideMonitorsDesks": 13,
-      "DualMonitor": 17,
+      "WideMonitorDesks": 13,
+      "DualMonitorDesks": 17,
       "FirstDeskType": "DualMonitor"
     },
     {
@@ -203,8 +203,8 @@
       "Type": "WarRoom",
       "Floor": 2,
       "TotalDesks": 4,
-      "WideMonitorsDesks": 4,
-      "DualMonitor": 0,
+      "WideMonitorDesks": 4,
+      "DualMonitorDesks": 0,
       "FirstDeskType": "WideMonitor"
     }
   ] 

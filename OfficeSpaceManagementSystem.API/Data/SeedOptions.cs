@@ -12,6 +12,8 @@ namespace OfficeSpaceManagementSystem.API.Data
         public int ReservationsCount { get; set; } = 200;
         public DateOnly ReservationDate { get; set; } = new DateOnly(2025, 5, 28);
 
+        public double FocusModePercentage { get; set; } = 0.1;
+
         public Func<int, DeskType>? DeskTypeSelector { get; set; } = null;
     }
 }
