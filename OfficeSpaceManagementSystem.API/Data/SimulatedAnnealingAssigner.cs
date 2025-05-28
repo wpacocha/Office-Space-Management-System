@@ -9,6 +9,7 @@ namespace OfficeSpaceManagementSystem.API.Data
         public List<Reservation> Run(
             List<Reservation> reservations,
             List<Desk> desks,
+            List<ZoneType> typeOrder,
             double initialTemperature = 100_000.0,
             double endTemperature = 1.0,
             double coolingRate = 0.9998)
@@ -17,13 +18,13 @@ namespace OfficeSpaceManagementSystem.API.Data
             var best = Clone(current);
 
             double temperature = initialTemperature;
-            int currentScore = CalculateScore(current, desks);
+            int currentScore = CalculateScore(current, desks, typeOrder);
             int bestScore = currentScore;
 
             for (int i = 0; temperature > endTemperature; i++)
             {
                 var neighbor = Mutate(Clone(current));
-                int neighborScore = CalculateScore(neighbor, desks);
+                int neighborScore = CalculateScore(neighbor, desks, typeOrder);
 
                 if (neighborScore < currentScore || AcceptWorseSolution(currentScore, neighborScore, temperature))
                 {
@@ -135,10 +136,11 @@ namespace OfficeSpaceManagementSystem.API.Data
             return _random.NextDouble() < probability;
         }
 
-        public static int CalculateScore(List<Reservation> reservations, List<Desk> desks)
+        public static int CalculateScore(List<Reservation> reservations, List<Desk> desks, List<ZoneType> typeOrder)
         {
             int score = 0;
 
+            var deskById = desks.ToDictionary(d => d.Id);
             var reservationsByTeam = reservations
              .Where(r => r.AssignedDeskId != null)
              .GroupBy(r => r.User.Team.Id)
@@ -152,6 +154,10 @@ namespace OfficeSpaceManagementSystem.API.Data
 
             foreach (var teamGroup in reservationsByTeam)
             {
+                var assignedDesks = teamGroup
+                    .Select(r => deskById[r.AssignedDeskId!.Value])
+                    .ToList();
+
                 var floors = teamGroup
                     .Select(r => desks.First(d => d.Id == r.AssignedDeskId).Zone.Florr)
                     .Distinct()
@@ -176,6 +182,17 @@ namespace OfficeSpaceManagementSystem.API.Data
                         score += 500 * (1 + maxTeamSize - teamSize);
                     else
                         score += 1000 * (zones.Count - 2) * (1 + maxTeamSize - teamSize);
+                }
+
+                var zoneTypeIndices = assignedDesks
+                    .Select(d => typeOrder.IndexOf(d.Zone.Type))
+                    .Where(i => i >= 0)
+                    .ToList();
+
+                if (zoneTypeIndices.Count > 0)
+                {
+                    double avgTypeIndex = zoneTypeIndices.Average();
+                    score += (int)(avgTypeIndex * 100);
                 }
             }
 

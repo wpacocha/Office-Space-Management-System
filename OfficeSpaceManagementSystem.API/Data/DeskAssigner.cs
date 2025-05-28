@@ -63,7 +63,7 @@ namespace OfficeSpaceManagementSystem.API.Data
             AssignSingleUsers(reservationsByTeam, desksByZone, zones, singleTeamTypes, failedAssignements);
             AssignBestFitTeams(reservationsByTeam, desksByZone, zones, otherTeamsTypes);
 
-            AssignUsingMetaheuristic(reservationsByTeam, desksByZone, failedAssignements);
+            AssignUsingMetaheuristic(reservationsByTeam, desksByZone, otherTeamsTypes, failedAssignements);
 
             TryImproveDeskTypeMatch(reservationsByTeam, desks);
 
@@ -187,13 +187,14 @@ namespace OfficeSpaceManagementSystem.API.Data
         private static void AssignUsingMetaheuristic(
             Dictionary<Team, List<Reservation>> reservationsByTeam,
             Dictionary<string, Queue<Desk>> desksByZone,
+            List<ZoneType> typeOrder,
             List<string> failed)
         {
             var desks = desksByZone.Values.SelectMany(q => q).ToList();
             var reservations = reservationsByTeam.Values.SelectMany(q => q).ToList();
 
             var simulatedAnnealing = new SimulatedAnnealingAssigner();
-            var optimizedReservations = simulatedAnnealing.Run(reservations, desks);
+            var optimizedReservations = simulatedAnnealing.Run(reservations, desks, typeOrder);
             for (int i = 0; i < reservations.Count; i++)
             {
                 if (reservations[i].AssignedDeskId != null) continue;
