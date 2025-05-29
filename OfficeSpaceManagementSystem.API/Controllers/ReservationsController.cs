@@ -133,36 +133,30 @@ namespace OfficeSpaceManagementSystem.API.Controllers
 
             return Ok(reservations);
         }
+
         [HttpGet("availability")]
         public IActionResult GetAvailability([FromQuery] DateOnly? date = null)
         {
             var targetDate = date ?? DateOnly.FromDateTime(DateTime.Today);
 
             var allDesks = _context.Desks.Include(d => d.Zone).ToList();
-
             var reservations = _context.Reservations
-                .Where(r => r.Date == targetDate)
+                .Include(r => r.assignedDesk)
+                .ThenInclude(d => d.Zone)
+                .Where(r => r.Date == targetDate && r.AssignedDeskId != null)
                 .ToList();
 
-            var focusZoneIds = _context.Zones
-                .Where(z =>
-                    z.Type == ZoneType.Focus ||
-                    z.Type == ZoneType.DuoFocus ||
-                    z.Type == ZoneType.WarRoom)
-                .Select(z => z.Id)
-                .ToList();
+            var focusZoneTypes = new[] { ZoneType.Focus, ZoneType.DuoFocus, ZoneType.WarRoom };
+            var focusDesks = allDesks.Where(d => focusZoneTypes.Contains(d.Zone.Type)).ToList();
 
-            var focusDesks = allDesks
-                .Where(d => focusZoneIds.Contains(d.ZoneId))
-                .ToList();
+            var reservedDeskIds = reservations.Select(r => r.AssignedDeskId.Value).ToHashSet();
+            var focusReservedCount = reservations.Count(r => focusZoneTypes.Contains(r.assignedDesk.Zone.Type));
 
             var allTotal = allDesks.Count;
-            var allReservedCount = reservations.Count;
-            var allFree = allTotal - allReservedCount;
+            var allFree = allDesks.Count(d => !reservedDeskIds.Contains(d.Id));
 
             var focusTotal = focusDesks.Count;
-            var focusReservedCount = reservations.Count(r => r.isFocusMode);
-            var focusFree = focusTotal - focusReservedCount;
+            var focusFree = focusDesks.Count(d => !reservedDeskIds.Contains(d.Id));
 
             return Ok(new
             {
@@ -172,6 +166,7 @@ namespace OfficeSpaceManagementSystem.API.Controllers
                 anyAvailable = allFree > 0
             });
         }
+
 
     }
 }
