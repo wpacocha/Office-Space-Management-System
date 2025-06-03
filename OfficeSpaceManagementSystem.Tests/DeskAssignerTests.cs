@@ -95,6 +95,8 @@ namespace OfficeSpaceManagementSystem.Tests
 
             var failedTeams = await deskAssigner.AssignAsync(date);
 
+            Assert.Empty(failedTeams);
+
             var reservations = context.Reservations
                 .Include(r => r.User)
                 .ThenInclude(u => u.Team)
@@ -124,8 +126,6 @@ namespace OfficeSpaceManagementSystem.Tests
             }
 
             Assert.All(reservations, r => Assert.NotNull(r.AssignedDeskId));
-
-            Assert.Empty(failedTeams);
         }
 
         [Fact]

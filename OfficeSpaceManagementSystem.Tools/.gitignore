@@ -1,0 +1,38 @@
+﻿# Build artifacts
+bin/
+obj/
+
+# User-specific files
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# OS
+.DS_Store
+
+# VS for Mac
+.vscode/
+
+# Dotnet tools
+*.db
+*.pidb
+*.sdf
+*.orig
+
+# Logs
+*.log
+
+# Others
+OfficeSpaceManagementSystem.API/Properties/launchSettings.json
+
+.vs/
+*.db
+*.db-shm
+*.db-wal
+
+# Node/React
+node_modules/
+package-lock.json
+.env
+.env.*
