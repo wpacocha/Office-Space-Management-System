@@ -29,7 +29,9 @@ namespace OfficeSpaceManagementSystem.API.Data
                 .GroupBy(d => d.Zone.Name)
                 .ToDictionary(g => g.Key, g => new Queue<Desk>(g.ToList()));
 
-            var zones = desks.Select(d => d.Zone)
+            var zones = desks
+                .Select(d => d.Zone)
+                .Where(z => z.Type != ZoneType.HR)
                 .Distinct()
                 .ToList();
 
@@ -58,12 +60,17 @@ namespace OfficeSpaceManagementSystem.API.Data
                 .ToList();
 
             AssignHrTeam(reservationsByTeam, desksByZone, hrZones, failedAssignements);
-            AssignExecutiveTeam(reservationsByTeam, desksByZone, executiveZones, failedAssignements);
 
-            AssignSingleUsers(reservationsByTeam, desksByZone, zones, singleTeamTypes, failedAssignements);
-            AssignBestFitTeams(reservationsByTeam, desksByZone, zones, otherTeamsTypes);
+            var desksByZoneNonHr = desksByZone
+                .Where(kvp => kvp.Key != hrZones.First())
+                .ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
 
-            AssignUsingMetaheuristic(reservationsByTeam, desksByZone, otherTeamsTypes, failedAssignements);
+            AssignExecutiveTeam(reservationsByTeam, desksByZoneNonHr, executiveZones, failedAssignements);
+
+            AssignSingleUsers(reservationsByTeam, desksByZoneNonHr, zones, singleTeamTypes, failedAssignements);
+            AssignBestFitTeams(reservationsByTeam, desksByZoneNonHr, zones, otherTeamsTypes);
+
+            AssignUsingMetaheuristic(reservationsByTeam, desksByZoneNonHr, otherTeamsTypes, failedAssignements);
 
             TryImproveDeskTypeMatch(reservationsByTeam, desks);
 
