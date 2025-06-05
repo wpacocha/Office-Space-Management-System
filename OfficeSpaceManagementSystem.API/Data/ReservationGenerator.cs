@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using Microsoft.EntityFrameworkCore;
 using OfficeSpaceManagementSystem.API.Models;
 
 namespace OfficeSpaceManagementSystem.API.Data
@@ -10,10 +11,16 @@ namespace OfficeSpaceManagementSystem.API.Data
         public static void Generate(AppDbContext db, DateOnly date, int count, double focusModePercentage)
         {
             var random = new Random();
-            var users = db.Users.ToList().OrderBy(_ => Guid.NewGuid()).ToList();
+
+            // POPRAWKA: dołączenie zespołu do użytkowników
+            var users = db.Users
+                .Include(u => u.Team)
+                .ToList()
+                .OrderBy(_ => Guid.NewGuid())
+                .ToList();
 
             var soloUsers = users
-                .Where(u => u.Team.name.StartsWith("Solo"))
+                .Where(u => u.Team != null && u.Team.name.StartsWith("Solo"))
                 .ToList();
 
             var reservations = new List<Reservation>();
@@ -65,7 +72,6 @@ namespace OfficeSpaceManagementSystem.API.Data
             Console.WriteLine($" - General: {generalCount}");
             Console.WriteLine($" - Total: {reservations.Count}");
             Console.WriteLine($" - Desks in DB: {db.Desks.Count()}");
-
         }
     }
 }

@@ -13,26 +13,40 @@ namespace OfficeSpaceManagementSystem.API.Data
         public static void Seed(AppDbContext db, SeedOptions? options = null)
         {
             options ??= new SeedOptions();
+            var date = options.ReservationDate;
 
-            db.Reservations.RemoveRange(db.Reservations);
-            db.Desks.RemoveRange(db.Desks);
-            db.Users.RemoveRange(db.Users);
-            db.Teams.RemoveRange(db.Teams);
-            db.Zones.RemoveRange(db.Zones);
+            Console.WriteLine($"[SEED] Removing reservations for {date}...");
+            var reservationsToRemove = db.Reservations.Where(r => r.Date == date);
+            db.Reservations.RemoveRange(reservationsToRemove);
             db.SaveChanges();
 
-            db.Database.ExecuteSqlRaw("DELETE FROM sqlite_sequence WHERE name = 'Users';");
-            db.Database.ExecuteSqlRaw("DELETE FROM sqlite_sequence WHERE name = 'Teams';");
-            db.Database.ExecuteSqlRaw("DELETE FROM sqlite_sequence WHERE name = 'Desks';");
-            db.Database.ExecuteSqlRaw("DELETE FROM sqlite_sequence WHERE name = 'Reservations';");
-            db.Database.ExecuteSqlRaw("DELETE FROM sqlite_sequence WHERE name = 'Zones';");
+            if (!db.Zones.Any())
+            {
+                Console.WriteLine("[SEED] Seeding Zones...");
+                SeedZones(db);
+            }
 
-            SeedZones(db);
-            Console.WriteLine($"[SEED] Zones: {db.Zones.Count()}");
-            SeedTeams(db, options);
-            SeedUsers(db, options);
-            SeedDesks(db);
-            ReservationGenerator.Generate(db, options.ReservationDate, options.ReservationsCount, options.FocusModePercentage);
+            if (!db.Teams.Any())
+            {
+                Console.WriteLine("[SEED] Seeding Teams...");
+                SeedTeams(db, options);
+            }
+
+            if (!db.Users.Any())
+            {
+                Console.WriteLine("[SEED] Seeding Users...");
+                SeedUsers(db, options);
+            }
+
+            if (!db.Desks.Any())
+            {
+                Console.WriteLine("[SEED] Seeding Desks...");
+                SeedDesks(db);
+            }
+
+            Console.WriteLine($"[SEED] Generating {options.ReservationsCount} reservations for {date}...");
+            ReservationGenerator.Generate(db, date, options.ReservationsCount, options.FocusModePercentage);
+            Console.WriteLine($"[SEED] ✅ Done.");
         }
 
         private static void SeedZones(AppDbContext db)
@@ -47,19 +61,16 @@ namespace OfficeSpaceManagementSystem.API.Data
         {
             var teams = new List<Team>();
 
-            // Solo 1–22
             for (int i = 1; i <= 22; i++)
                 teams.Add(new Team { name = $"Solo {i}" });
 
-            // HR & Executive
             teams.Add(new Team { name = "HR" });
             teams.Add(new Team { name = "Executive" });
 
-            // Team A, B, ..., Z, AA, AB, ..., ZZ
             int toGenerate = options.TotalTeams - teams.Count;
             var nameSet = new HashSet<string>(teams.Select(t => t.name));
-
             int index = 0;
+
             while (teams.Count < options.TotalTeams)
             {
                 string name = GenerateTeamName(index);
@@ -95,12 +106,13 @@ namespace OfficeSpaceManagementSystem.API.Data
 
             foreach (var team in teams)
             {
-                int count;
-
-                if (team.name == "HR") count = 8;
-                else if (team.name == "Executive") count = 16;
-                else if (team.name.StartsWith("Solo")) count = 1;
-                else count = random.Next(options.MinUsersPerTeam, options.MaxUsersPerTeam + 1);
+                int count = team.name switch
+                {
+                    "HR" => 8,
+                    "Executive" => 16,
+                    var solo when solo.StartsWith("Solo") => 1,
+                    _ => random.Next(options.MinUsersPerTeam, options.MaxUsersPerTeam + 1)
+                };
 
                 for (int i = 0; i < count && users.Count < options.TotalUsers; i++)
                 {
@@ -129,24 +141,15 @@ namespace OfficeSpaceManagementSystem.API.Data
 
             foreach (var zone in zones)
             {
-                var types = new List<DeskType>();
+                var types = Enumerable.Repeat(DeskType.WideMonitor, zone.WideMonitorDesks)
+                    .Concat(Enumerable.Repeat(DeskType.DualMonitor, zone.DualMonitorDesks))
+                    .OrderBy(_ => Guid.NewGuid()) // shuffle
+                    .ToList();
 
-                // Dodaj wide monitory
-                for (int i = 0; i < zone.WideMonitorDesks; i++)
-                    types.Add(DeskType.WideMonitor);
-
-                // Dodaj dual monitory
-                for (int i = 0; i < zone.DualMonitorDesks; i++)
-                    types.Add(DeskType.DualMonitor);
-
-                // Sprawdzenie bezpieczeństwa
                 if (types.Count != zone.TotalDesks)
                 {
                     Console.WriteLine($"[WARN] Mismatch in zone {zone.Name}: expected {zone.TotalDesks}, got {types.Count}");
                 }
-
-                // Opcjonalne przetasowanie
-                types = types.OrderBy(_ => Guid.NewGuid()).ToList();
 
                 for (int i = 0; i < types.Count; i++)
                 {
@@ -161,9 +164,8 @@ namespace OfficeSpaceManagementSystem.API.Data
 
             db.Desks.AddRange(desks);
             db.SaveChanges();
-            Console.WriteLine($"[SEED] Biurek w bazie: {db.Desks.Count()}");
+            Console.WriteLine($"[SEED] Desks seeded: {desks.Count}");
         }
-
-
     }
+
 }

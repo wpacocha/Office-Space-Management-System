@@ -84,6 +84,7 @@ namespace OfficeSpaceManagementSystem.API.Controllers
                 return NotFound($"User with ID {userId} not found.");
 
             var reservations = _context.Reservations
+                .Include(r => r.assignedDesk)
                 .Where(r => r.UserId == userId)
                 .Select(r => new
                 {
@@ -92,8 +93,10 @@ namespace OfficeSpaceManagementSystem.API.Controllers
                     r.CreatedAt,
                     r.DeskTypePref,
                     r.isFocusMode,
-                    AssignedDeskName = r.assignedDesk != null ? r.assignedDesk.Name : null
+                    AssignedDeskName = r.assignedDesk != null ? r.assignedDesk.Name : null,
+                    AssignedDeskType = r.assignedDesk != null ? r.assignedDesk.DeskType : (DeskType?)null
                 })
+
                 .OrderByDescending(r => r.Date)
                 .ToList();
 
@@ -140,23 +143,28 @@ namespace OfficeSpaceManagementSystem.API.Controllers
             var targetDate = date ?? DateOnly.FromDateTime(DateTime.Today);
 
             var allDesks = _context.Desks.Include(d => d.Zone).ToList();
-            var reservations = _context.Reservations
-                .Include(r => r.assignedDesk)
-                .ThenInclude(d => d.Zone)
-                .Where(r => r.Date == targetDate && r.AssignedDeskId != null)
-                .ToList();
-
             var focusZoneTypes = new[] { ZoneType.Focus, ZoneType.DuoFocus, ZoneType.WarRoom };
             var focusDesks = allDesks.Where(d => focusZoneTypes.Contains(d.Zone.Type)).ToList();
 
-            var reservedDeskIds = reservations.Select(r => r.AssignedDeskId.Value).ToHashSet();
-            var focusReservedCount = reservations.Count(r => focusZoneTypes.Contains(r.assignedDesk.Zone.Type));
+            var reservations = _context.Reservations
+                .Include(r => r.User)
+                .ThenInclude(u => u.Team)
+                .Where(r => r.Date == targetDate)
+                .ToList();
 
-            var allTotal = allDesks.Count;
-            var allFree = allDesks.Count(d => !reservedDeskIds.Contains(d.Id));
+            int allTotal = allDesks.Count;
+            int focusTotal = focusDesks.Count;
 
-            var focusTotal = focusDesks.Count;
-            var focusFree = focusDesks.Count(d => !reservedDeskIds.Contains(d.Id));
+            int allReserved = reservations.Count;
+            int allFree = Math.Max(0, allTotal - allReserved);
+
+            // Focus może być wolny tylko jeśli coś zostało w ogóle
+            int focusReserved = reservations.Count(r =>
+                r.isFocusMode ||
+                (r.User?.Team != null && r.User.Team.name.StartsWith("Solo"))
+            );
+
+            int focusFree = allFree == 0 ? 0 : Math.Max(0, focusTotal - focusReserved);
 
             return Ok(new
             {
