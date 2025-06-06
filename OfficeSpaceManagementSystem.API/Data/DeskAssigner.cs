@@ -65,7 +65,7 @@ namespace OfficeSpaceManagementSystem.API.Data
                 .Where(kvp => kvp.Key != hrZones.First())
                 .ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
 
-            AssignExecutiveTeam(reservationsByTeam, desksByZoneNonHr, executiveZones, failedAssignements);
+            AssignExecutiveTeam(reservationsByTeam, reservations.Count, desksByZoneNonHr, executiveZones, failedAssignements);
 
             AssignSingleUsers(reservationsByTeam, desksByZoneNonHr, zones, singleTeamTypes, failedAssignements);
             AssignBestFitTeams(reservationsByTeam, desksByZoneNonHr, zones, otherTeamsTypes);
@@ -99,10 +99,14 @@ namespace OfficeSpaceManagementSystem.API.Data
 
         private static void AssignExecutiveTeam(
             Dictionary<Team, List<Reservation>> reservationsByTeam,
+            int reservationsCount,
             Dictionary<string, Queue<Desk>> desksByZone,
             List<string> preferredZones,
             List<string> failed)
         {
+            desksByZone.TryGetValue(preferredZones.First(), out var execRoomDesksInput);
+            var execRoomDesksCount = execRoomDesksInput!.Count;
+
             var executiveTeam = reservationsByTeam.Keys.FirstOrDefault(t => t.name == "Executive");
             if (executiveTeam == null) return;
 
@@ -112,6 +116,13 @@ namespace OfficeSpaceManagementSystem.API.Data
 
             if (assigned < executiveReservations.Count)
                 failed.Add($"Executive Team: {executiveReservations.Count - assigned} users could not be assigned.");
+
+            if (desksByZone.TryGetValue(preferredZones.First(), out var execRoomDesks)
+                && execRoomDesks.Count != execRoomDesksCount
+                && reservationsCount - assigned <= 223 - execRoomDesksCount)
+            {
+                execRoomDesks.Clear();
+            }
 
             reservationsByTeam.Remove(executiveTeam);
         }
