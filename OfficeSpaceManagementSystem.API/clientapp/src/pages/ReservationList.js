@@ -19,10 +19,11 @@ function ReservationList() {
     }, []);
 
     const deskTypeName = (type) => {
-        if (type === 0) return "Wide Monitor";
-        if (type === 1) return "Dual Monitor";
+        if (type === 0) return "Dual Monitor";
+        if (type === 1) return "Wide Monitor";
         return "Unknown";
     };
+
 
     const handleDelete = async (id) => {
         if (!window.confirm("Are you sure you want to cancel this reservation?")) return;

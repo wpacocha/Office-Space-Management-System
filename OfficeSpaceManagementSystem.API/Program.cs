@@ -20,9 +20,21 @@ app.MapControllers();
 using (var scope = app.Services.CreateScope())
 {
     var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-    DbSeeder.Seed(context); // bez rezerwacji
-}
 
+    var today = DateOnly.FromDateTime(DateTime.Today.AddDays(1)); // przykładowo na jutro
+    var options = new SeedOptions
+    {
+        ReservationDate = today,
+        ReservationsCount = 200,
+        TotalTeams = 100,
+        TotalUsers = 300,
+        MinUsersPerTeam = 2,
+        MaxUsersPerTeam = 30,
+        FocusModePercentage = 0.15
+    };
+
+    DbSeeder.Seed(context, options);
+}
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
@@ -53,6 +65,4 @@ app.MapPost("/assign", async (AppDbContext db) =>
         : Results.BadRequest($"❌ Nie udało się przypisać: {string.Join(", ", failedTeams)}");
 });
 
-
 app.Run();
-
