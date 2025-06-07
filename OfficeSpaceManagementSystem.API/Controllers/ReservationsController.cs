@@ -146,25 +146,40 @@ namespace OfficeSpaceManagementSystem.API.Controllers
             var focusZoneTypes = new[] { ZoneType.Focus, ZoneType.DuoFocus, ZoneType.WarRoom };
             var focusDesks = allDesks.Where(d => focusZoneTypes.Contains(d.Zone.Type)).ToList();
 
+            var hrZone = _context.Zones.FirstOrDefault(z => z.Name == "0-8");
+            var hrZoneId = hrZone?.Id ?? -1;
+
+            // 🔹 Ogólne biurka – tylko spoza 0-8
+            var generalDesks = allDesks.Where(d => d.ZoneId != hrZoneId).ToList();
+
             var reservations = _context.Reservations
                 .Include(r => r.User)
                 .ThenInclude(u => u.Team)
                 .Where(r => r.Date == targetDate)
                 .ToList();
 
-            int allTotal = allDesks.Count;
+            var reservedDeskIds = reservations
+                .Where(r => r.AssignedDeskId != null)
+                .Select(r => r.AssignedDeskId.Value)
+                .ToHashSet();
+
+            // 🔹 Liczenie total i free
+            int allTotal = generalDesks.Count; // 223 - 4 = 219
+            int allFree = generalDesks.Count(d => !reservedDeskIds.Contains(d.Id));
+
+            // 🔹 Focus desks
             int focusTotal = focusDesks.Count;
-
-            int allReserved = reservations.Count;
-            int allFree = Math.Max(0, allTotal - allReserved);
-
-            // Focus może być wolny tylko jeśli coś zostało w ogóle
             int focusReserved = reservations.Count(r =>
                 r.isFocusMode ||
                 (r.User?.Team != null && r.User.Team.name.StartsWith("Solo"))
             );
-
             int focusFree = allFree == 0 ? 0 : Math.Max(0, focusTotal - focusReserved);
+
+            var hrUserIds = reservations
+                .Where(r => r.User != null && r.User.Team != null && r.User.Team.name.Trim().Equals("HR", StringComparison.OrdinalIgnoreCase))
+                .Select(r => r.UserId)
+                .Distinct()
+                .ToList();
 
             return Ok(new
             {
@@ -174,7 +189,6 @@ namespace OfficeSpaceManagementSystem.API.Controllers
                 anyAvailable = allFree > 0
             });
         }
-
 
     }
 }
