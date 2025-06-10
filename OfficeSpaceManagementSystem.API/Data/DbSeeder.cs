@@ -37,32 +37,6 @@ namespace OfficeSpaceManagementSystem.API.Data
                 Console.WriteLine("[SEED] Seeding Users...");
                 SeedUsers(db, options);
             }
-            // 🧪 Jednorazowe testowe rezerwacje dla 8 osób z HR
-            var dateForTest = options.ReservationDate;
-            var hrTeam = db.Teams.FirstOrDefault(t => t.name == "HR");
-            if (hrTeam != null)
-            {
-                var hrUsers = db.Users
-                    .Where(u => u.TeamId == hrTeam.Id)
-                    .Take(8)
-                    .ToList();
-
-                foreach (var user in hrUsers)
-                {
-                    db.Reservations.Add(new Reservation
-                    {
-                        UserId = user.Id,
-                        Date = dateForTest,
-                        CreatedAt = DateTime.Now,
-                        DeskTypePref = 0,
-                        isFocusMode = false,
-                        AssignedDeskId = null // przypisze się później
-                    });
-                }
-
-                db.SaveChanges();
-                Console.WriteLine("[SEED] ➕ Dodano testowe rezerwacje dla 8 HR.");
-            }
 
             if (!db.Desks.Any())
             {

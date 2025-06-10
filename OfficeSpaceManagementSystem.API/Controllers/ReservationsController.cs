@@ -170,10 +170,10 @@ namespace OfficeSpaceManagementSystem.API.Controllers
             // 🔹 Focus desks
             int focusTotal = focusDesks.Count;
             int focusReserved = reservations.Count(r =>
-                r.isFocusMode ||
-                (r.User?.Team != null && r.User.Team.name.StartsWith("Solo"))
+                r.AssignedDeskId != null &&
+                focusZoneTypes.Contains(r.assignedDesk.Zone.Type)
             );
-            int focusFree = allFree == 0 ? 0 : Math.Max(0, focusTotal - focusReserved);
+            int focusFree = focusDesks.Count(d => !reservedDeskIds.Contains(d.Id));
 
             var hrUserIds = reservations
                 .Where(r => r.User != null && r.User.Team != null && r.User.Team.name.Trim().Equals("HR", StringComparison.OrdinalIgnoreCase))
