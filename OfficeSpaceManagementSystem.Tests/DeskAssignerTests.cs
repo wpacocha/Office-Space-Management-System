@@ -86,7 +86,7 @@ namespace OfficeSpaceManagementSystem.Tests
             var options = new SeedOptions 
             {
                 TotalUsers = 1000,
-                ReservationsCount = 223
+                ReservationsCount = 219
             };
             DbSeeder.Seed(context, options);
             var deskAssigner = new DeskAssigner(context);
