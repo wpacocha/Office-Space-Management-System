@@ -9,6 +9,7 @@ using CsvHelper.Configuration;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using OfficeSpaceManagementSystem.API.Data;
+using Xunit;
 
 namespace OfficeSpaceManagementSystem.Tools.Exporters
 {
@@ -36,7 +37,9 @@ namespace OfficeSpaceManagementSystem.Tools.Exporters
                 DbSeeder.Seed(context, options);
 
                 var assigner = new DeskAssigner(context);
-                await assigner.AssignAsync(options.ReservationDate);
+                var failed = await assigner.AssignAsync(options.ReservationDate);
+
+                Assert.Empty(failed);
 
                 var reservations = context.Reservations
                     .Include(r => r.User)
