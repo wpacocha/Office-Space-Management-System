@@ -47,6 +47,11 @@ namespace OfficeSpaceManagementSystem.API.Data
             var hrZones = config.SpecialTeams["HR"].ToList();
             var executiveZones = config.SpecialTeams["Executive"].ToList();
 
+            var hrExclusiveZoneCapacity = desks
+                .Where(d => d.Zone.Type == ZoneType.HR)
+                .Distinct()
+                .Count();
+
             var singleTeamTypes = config.TeamSizeRules
                 .Where(r => r.MinSize == 1 && r.MaxSize == 1)
                 .SelectMany(r => r.PriorityTypes)
@@ -65,7 +70,14 @@ namespace OfficeSpaceManagementSystem.API.Data
                 .Where(kvp => kvp.Key != hrZones.First())
                 .ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
 
-            AssignExecutiveTeam(reservationsByTeam, reservations.Count, desksByZoneNonHr, executiveZones, failedAssignements);
+            AssignExecutiveTeam(
+                reservationsByTeam,
+                reservations.Count - Math.Min(reservations.Count(r => r.User.Team.name == "HR"), hrExclusiveZoneCapacity),
+                hrExclusiveZoneCapacity,
+                desksByZoneNonHr,
+                executiveZones,
+                failedAssignements
+            );
 
             AssignSingleUsers(reservationsByTeam, desksByZoneNonHr, zones, singleTeamTypes, failedAssignements);
             AssignBestFitTeams(reservationsByTeam, desksByZoneNonHr, zones, otherTeamsTypes);
@@ -100,6 +112,7 @@ namespace OfficeSpaceManagementSystem.API.Data
         private static void AssignExecutiveTeam(
             Dictionary<Team, List<Reservation>> reservationsByTeam,
             int reservationsCount,
+            int hrExclusiveZoneCapacity,
             Dictionary<string, Queue<Desk>> desksByZone,
             List<string> preferredZones,
             List<string> failed)
@@ -119,7 +132,7 @@ namespace OfficeSpaceManagementSystem.API.Data
 
             if (desksByZone.TryGetValue(preferredZones.First(), out var execRoomDesks)
                 && execRoomDesks.Count != execRoomDesksCount
-                && reservationsCount - assigned <= 223 - execRoomDesksCount)
+                && reservationsCount - assigned <= 223 - hrExclusiveZoneCapacity - execRoomDesksCount)
             {
                 execRoomDesks.Clear();
             }
